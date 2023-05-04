@@ -16,7 +16,6 @@ class cHierarchicalForecastEngine:
     def __init__(self):
         self.mOptions = tsopts.cSignalDecomposition_Options();
         self.mSignalHierarchy = None;
-        pass
     
     def train(self , iInputDS, iTime, iSignal, iHorizon, iHierarchy = None, iExogenousData = None, ):
         try:
@@ -26,12 +25,10 @@ class cHierarchicalForecastEngine:
         except Exception as error:
             # print('caught this training error: ' + repr(error))            
             raise tsutil.PyAF_Error("HIERARCHICAL_TRAIN_FAILED");
-        pass
 
     def forecast(self , iInputDS, iHorizon):
         try:
-            lForecastFrame = self.forecast_HierarchicalModel(iInputDS, iHorizon);
-            return lForecastFrame;
+            return self.forecast_HierarchicalModel(iInputDS, iHorizon)
         except tsutil.PyAF_Error as error:
             raise error
         except Exception as error:
@@ -65,9 +62,7 @@ class cHierarchicalForecastEngine:
     def generateCode(self, iDSN = None, iDialect = None):
         from CodeGen import TS_CodeGen_Objects as tscodegen
         lCodeGenerator = tscodegen.cDecompositionCodeGenObject(iDSN, iDialect);
-        lSQL = lCodeGenerator.generateCode(self);
-        # print("GENERATED_SQL_CODE" , lSQL);
-        return lSQL;
+        return lCodeGenerator.generateCode(self)
 
     def create_signal_hierarchy(self , iInputDS, iTime, iSignal, iHorizon, iHierarchy, iExogenousData = None):
         lSignalHierarchy = None;

@@ -30,7 +30,6 @@ def createDirIfNeeded(dirname):
 class cBenchmarkError(Exception):
     def __init__(self, msg):
         super().__init__(msg);
-        pass
 
 def set_pyaf_logger(log_filename):
     import logging
@@ -38,9 +37,8 @@ def set_pyaf_logger(log_filename):
     pyaf_logger = logging.getLogger('pyaf.std')
     pyaf_logger.setLevel(logging.DEBUG)
     pyaf_logger.handlers = []
-    handler = logging.FileHandler(log_filename)    
+    handler = logging.FileHandler(log_filename)
     pyaf_logger.addHandler(handler)
-    pass
 
 def run_bench_process(a):
     try:
@@ -125,8 +123,8 @@ class cGeneric_OneSignal_Tester:
         lSize = N - iHorizon;
         if(N <= iHorizon):
             lSize = N
-        df = lFullDF[0: lSize];
-            
+        df = lFullDF[:lSize];
+
         self.mTrainDataset[iSignal  + "_" + str(iHorizon)] = df;
         self.reportTrainingDataInfo(iSignal, iHorizon);
 
@@ -177,7 +175,7 @@ class cGeneric_OneSignal_Tester:
         lSize = N - iHorizon;
         if(N <= iHorizon):
             lSize = N
-        self.mApplyIn = lFullDF[0: lSize];
+        self.mApplyIn = lFullDF[:lSize];
         #self.mApplyIn.to_csv(iSignal + "_applyIn.csv");
 
     def applyModel(self, iSignal, iHorizon):
@@ -213,20 +211,14 @@ class cGeneric_OneSignal_Tester:
             lModelFormula = lAutoF1.mSignalDecomposition.mBestModel.getFormula();
             N  = self.mTrainDataset[k].shape[0]
             lPerf = self.mTestPerfData[k];
-            str1 = str(k) + " " + str(N) + " '" + lModelFormula + "' ";
+            str1 = f"{str(k)} {str(N)} '" + lModelFormula + "' ";
             str1 = str1 + str(lPerf.mCount) + " " +  str(lPerf.mMAPE);
-            str1 = str1 + " " + str(lPerf.mSMAPE) + " " + str(lPerf.mMASE) + " " +  str(lPerf.mL1) + " " + str(lPerf.mL2) + " " +  str(lPerf.mR2) + "\n";            
+            str1 = str1 + " " + str(lPerf.mSMAPE) + " " + str(lPerf.mMASE) + " " +  str(lPerf.mL1) + " " + str(lPerf.mL2) + " " +  str(lPerf.mR2) + "\n";
         return str1;
 
 
     def pickleModel(self, iModel):
         return iModel
-        import pickle
-        output = pickle.dumps(iModel)
-        lReloadedObject = pickle.loads(output)
-        output2 = pickle.dumps(lReloadedObject)    
-        assert(iModel.to_json() == lReloadedObject.to_json())
-        return lReloadedObject;
 
     def generateCode(self, iSignal, iHorizon):
         lAutoF = self.mAutoForecastBySignal[iSignal  + "_" + str(iHorizon)]
@@ -254,8 +246,13 @@ class cGeneric_OneSignal_Tester:
         print("BENCHMARK_PERF_DETAIL_SIGNAL_HORIZON", self.mTSSpec.mName , iSignal,
               self.mTrainDataset[iSignal  + "_" + str(iHorizon)].shape[0] ,
               iHorizon);
-        print("BENCHMARK_PERF_DETAIL_BENCH_TIME_IN_SECONDS", "PYAF_SYSTEM_DEPENDENT_", self.mTSSpec.mName , iSignal,
-              str(self.mTrainTime[iSignal  + "_" + str(iHorizon)]));        
+        print(
+            "BENCHMARK_PERF_DETAIL_BENCH_TIME_IN_SECONDS",
+            "PYAF_SYSTEM_DEPENDENT_",
+            self.mTSSpec.mName,
+            iSignal,
+            self.mTrainTime[iSignal + "_" + str(iHorizon)],
+        );
         print("BENCHMARK_PERF_DETAIL_BEST_MODEL", self.mTSSpec.mName , iSignal,
               lAutoF1.mSignalDecomposition.mBestModel.getFormula());
         print("BENCHMARK_PERF_DETAIL_PERF_COUNT", self.mTSSpec.mName , iSignal,
@@ -264,7 +261,6 @@ class cGeneric_OneSignal_Tester:
               lPerf.mMAPE,  lPerf.mSMAPE, lPerf.mMASE);
         print("BENCHMARK_PERF_DETAIL_PERF_L1_L2_R2", self.mTSSpec.mName , iSignal,
               lPerf.mL1,  lPerf.mL2,  lPerf.mR2);
-        pass
 
     def testSignalIdempotency(self, iSignal, iHorizon, tr, cy, ar):
         lAutoF1 = self.mAutoForecastBySignal[iSignal  + "_" + str(iHorizon)];
@@ -308,7 +304,7 @@ class cGeneric_OneSignal_Tester:
 
 
 def md_header():
-    header = """{
+    return """{
        "metadata" : {
           "signature": "hex-digest",
           "kernel_info": {
@@ -323,7 +319,6 @@ def md_header():
        "nbformat": 4,
        "nbformat_minor": 0,
     """
-    return header
 
 
 def build_markdown_cell(cell_data):
@@ -331,8 +326,7 @@ def build_markdown_cell(cell_data):
          "cell_type" : "markdown",
          "metadata" : {},
     """
-    md_data = md_data + '"source" : ["' + cell_data + '"]\n}'
-    return md_data
+    return f'{md_data}"source" : ["' + cell_data + '"]\n}'
 
 
 def render_markdown(iPlots):
@@ -374,10 +368,9 @@ class cGeneric_Tester:
     def generate_notebook(self, iPlots):
         lMarkDown = render_markdown(iPlots)
         filename = "Bench_plot_" + self.mBenchName + ".ipynb"
-        file = open(filename, "w");
-        print("WRTITING_PLOTS_FILE" , filename);
-        file.write(lMarkDown);
-        file.close();
+        with open(filename, "w") as file:
+            print("WRTITING_PLOTS_FILE" , filename);
+            file.write(lMarkDown);
         
 
     def testAllSignals(self, iHorizon):
@@ -389,26 +382,21 @@ class cGeneric_Tester:
             tester.mParallelMode = False;
             tester.testSignal(sig, lHorizon);
             del tester;
-        pass
     
     def testSignals(self, iSignals, iHorizon = 2):
         sigs = iSignals.split(" ");
         lPlots = []
         for sig in sigs:
-            if(sig in self.mTSSpecPerSignal.keys()):
-                lSpec = self.mTSSpecPerSignal[sig]
-                # print(lSpec.__dict__)
-                lHorizon = lSpec.mHorizon[sig]
-                tester = cGeneric_OneSignal_Tester(lSpec, self.mBenchName);
-                tester.mParallelMode = True;
-                tester.testSignal(sig, lHorizon);
-                lPlots = lPlots + [tester.mPlot];
-                del tester;
-            else:
+            if sig not in self.mTSSpecPerSignal.keys():
                 raise cBenchmarkError("UNKNOWN_SIGNAL '" + sig + "'");
-                pass;
-        # self.generate_notebook(lPlots)
-        pass
+            lSpec = self.mTSSpecPerSignal[sig]
+            # print(lSpec.__dict__)
+            lHorizon = lSpec.mHorizon[sig]
+            tester = cGeneric_OneSignal_Tester(lSpec, self.mBenchName);
+            tester.mParallelMode = True;
+            tester.testSignal(sig, lHorizon);
+            lPlots = lPlots + [tester.mPlot];
+            del tester;
 
 
     def run_multiprocessed(self, nbprocesses = None):

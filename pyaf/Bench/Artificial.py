@@ -21,5 +21,4 @@ class cArtificial_Tester(ben.cGeneric_Tester):
         
     def __init__(self , tsspec, bench_name):
         super().__init__(tsspec, bench_name);
-        pass;
 

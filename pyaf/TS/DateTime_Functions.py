@@ -114,35 +114,29 @@ class cDateTime_Helper:
     def get_lags_for_time_resolution(self):
         if(not self.isPhysicalTime()):
             return None;
-        lARORder = {}
-        lARORder[eTimeResolution.SECOND] = 60
-        lARORder[eTimeResolution.MINUTE] = 60
-        lARORder[eTimeResolution.HOUR] = 24
-        lARORder[eTimeResolution.DAY] = 31
-        lARORder[eTimeResolution.MONTH] = 12
+        lARORder = {
+            eTimeResolution.SECOND: 60,
+            eTimeResolution.MINUTE: 60,
+            eTimeResolution.HOUR: 24,
+            eTimeResolution.DAY: 31,
+            eTimeResolution.MONTH: 12,
+        }
         return lARORder.get(self.mResolution , None)
 
 
     def adaptTimeDeltaToTimeResolution(self, iResolution, iTimeDelta):
-        if(eTimeResolution.SECOND == iResolution):
-            lTimeDelta = pd.DateOffset(seconds=round(iTimeDelta / np.timedelta64(1,'s')))
-            return lTimeDelta
-        if(eTimeResolution.MINUTE == iResolution):
-            lTimeDelta = pd.DateOffset(minutes=round(iTimeDelta / np.timedelta64(1,'m')))
-            return lTimeDelta
-        if(eTimeResolution.HOUR == iResolution):
-            lTimeDelta = pd.DateOffset(hours=round(iTimeDelta / np.timedelta64(1,'h')))
-            return lTimeDelta
-        if(eTimeResolution.DAY == iResolution):
-            lTimeDelta = pd.DateOffset(days=round(iTimeDelta / np.timedelta64(1,'D')))
-            return lTimeDelta
-        if(eTimeResolution.MONTH == iResolution):
-            lTimeDelta = pd.DateOffset(months=round(iTimeDelta // np.timedelta64(30,'D')))
-            return lTimeDelta
-        if(eTimeResolution.YEAR == iResolution):
-            lTimeDelta = pd.DateOffset(months=round(iTimeDelta // np.timedelta64(365,'D')))
-            return lTimeDelta
-        pass
+        if (eTimeResolution.SECOND == iResolution):
+            return pd.DateOffset(seconds=round(iTimeDelta / np.timedelta64(1,'s')))
+        if (eTimeResolution.MINUTE == iResolution):
+            return pd.DateOffset(minutes=round(iTimeDelta / np.timedelta64(1,'m')))
+        if (eTimeResolution.HOUR == iResolution):
+            return pd.DateOffset(hours=round(iTimeDelta / np.timedelta64(1,'h')))
+        if (eTimeResolution.DAY == iResolution):
+            return pd.DateOffset(days=round(iTimeDelta / np.timedelta64(1,'D')))
+        if (eTimeResolution.MONTH == iResolution):
+            return pd.DateOffset(months=round(iTimeDelta // np.timedelta64(30,'D')))
+        if (eTimeResolution.YEAR == iResolution):
+            return pd.DateOffset(months=round(iTimeDelta // np.timedelta64(365,'D')))
     
     
     def get_beginning_of_period(self, iPeriod, x):

@@ -44,7 +44,6 @@ class cAbstractSignalTransform:
         self.mComplexity = None;
         self.mScaling = None;
         self.mDebug = False;
-        pass
 
     def is_applicable(self, sig):
         return True;
@@ -57,15 +56,13 @@ class cAbstractSignalTransform:
             raise tsutil.PyAF_Error('Invalid Signal Column Type ' + sig.dtype);
 
     def fit_scaling_params(self, sig):
-        if(self.mScaling is not None):
+        if (self.mScaling is not None):
             # self.mMeanValue = np.mean(sig);
             # self.mStdValue = np.std(sig);
             # lEps = 1.0e-10
             self.mMinInputValue = np.min(sig);
             self.mMaxInputValue = np.max(sig);
             self.mInputValueRange = self.mMaxInputValue - self.mMinInputValue;
-        else:
-            pass
 
     def scale_value(self, x):
         if(np.fabs(self.mInputValueRange) < 1e-10):
@@ -73,29 +70,16 @@ class cAbstractSignalTransform:
         return (x - self.mMinInputValue) / self.mInputValueRange;
 
     def scale_signal(self, sig):
-        if(self.mScaling is not None):
-            # print("SCALE_START", sig.values[1:5]);
-            sig1 = sig.apply(self.scale_value);
-            # print("SCALE_END", sig1.values[1:5]);
-            return sig1;
-        else:
-            return sig;
+        return sig.apply(self.scale_value) if (self.mScaling is not None) else sig
 
     def rescale_value(self, x):
-        y = self.mMinInputValue + x * self.mInputValueRange;
-        return y
+        return self.mMinInputValue + x * self.mInputValueRange
     
     
         
 
     def rescale_signal(self, sig1):
-        if(self.mScaling is not None):
-            # print("RESCALE_START", sig1.values[1:5]);
-            sig = sig1.apply(self.rescale_value);
-            # print("RESCALE_END", sig.values[1:5]);
-            return sig;
-        else:
-            return sig1;
+        return sig1.apply(self.rescale_value) if (self.mScaling is not None) else sig1
 
     def fit(self , sig):
         # print("FIT_START", self.mOriginalSignal, sig.values[1:5]);
@@ -103,8 +87,6 @@ class cAbstractSignalTransform:
         self.fit_scaling_params(sig);
         sig1 = self.scale_signal(sig);
         self.specific_fit(sig1);
-        # print("FIT_END", self.mOriginalSignal, sig1.values[1:5]);
-        pass
 
     def apply(self, sig):
         # print("APPLY_START", self.mOriginalSignal, sig.values[1:5]);
@@ -119,9 +101,7 @@ class cAbstractSignalTransform:
     def invert(self, sig1):
         # print("INVERT_START", self.mOriginalSignal, sig1.values[1:5]);
         sig2 = self.specific_invert(sig1);
-        rescaled_sig = self.rescale_signal(sig2);
-        # print("INVERT_END", self.mOriginalSignal, rescaled_sig.values[1:5]);
-        return rescaled_sig;
+        return self.rescale_signal(sig2)
 
 
     def transformDataset(self, df, isig):
@@ -145,7 +125,6 @@ class cAbstractSignalTransform:
         if(np.isnan(sig).any()):
             print("TRANSFORMATION_RESULT_WITH_NAN_IN_SIGNAL" , sig);
             raise tsutil.Internal_PyAF_Error("Invalid transformation for column '" + name + "'");
-        pass
 
 
 class cSignalTransform_None(cAbstractSignalTransform):
@@ -155,10 +134,9 @@ class cSignalTransform_None(cAbstractSignalTransform):
         self.mFormula = "NoTransf";
         self.mComplexity = 0;
         self.mScaling = True;
-        pass
 
     def get_name(self, iSig):
-        return "_" + str(iSig);
+        return f"_{str(iSig)}";
     
     def specific_fit(self , sig):
         pass
@@ -181,10 +159,9 @@ class cSignalTransform_Accumulate(cAbstractSignalTransform):
         self.mFormula = "Integration";
         self.mComplexity = 1;
         self.mScaling = True;
-        pass
 
     def get_name(self, iSig):
-        return "CumSum_" + str(iSig);
+        return f"CumSum_{str(iSig)}";
     
     def specific_fit(self , sig):
         pass
@@ -209,45 +186,37 @@ class cSignalTransform_Quantize(cAbstractSignalTransform):
         self.mFormula = "Quantization";
         self.mComplexity = 2;
         self.mScaling = True;
-        pass
 
     def get_name(self, iSig):
-        return "Quantized_" + str(self.mQuantiles) + "_" + str(iSig);
+        return f"Quantized_{str(self.mQuantiles)}_{str(iSig)}";
 
     def is_applicable(self, sig):
         N = sig.shape[0];
-        if(N < (5 * self.mQuantiles)) :
-            return False;
-        return True;
+        return N >= 5 * self.mQuantiles
     
     def specific_fit(self , sig):
         Q = self.mQuantiles;
         q = pd.Series(range(0,Q)).apply(lambda x : sig.quantile(x/Q))
         self.mCurve = q.to_dict()
         (self.mMin, self.mMax) = (min(self.mCurve.keys()), max(self.mCurve.keys()))
-        pass
 
     def signal2quant(self, x):
         curve = self.mCurve;
         return min(curve.keys(), key=lambda y:abs(float(curve[y])-x))
     
     def specific_apply(self, df):
-        lSignal_Q = df.apply(self.signal2quant);
-        return lSignal_Q;
+        return df.apply(self.signal2quant)
 
     def quant2signal(self, x):
-         curve = self.mCurve;
-         key = int(x);
-         if(key >= self.mMax):
-             key = self.mMax;
-         if(key <= self.mMin):
-             key = self.mMin;            
-         val = curve[key]
-         return val;
+        curve = self.mCurve;
+        key = int(x);
+        key = min(key, self.mMax)
+        if(key <= self.mMin):
+            key = self.mMin;
+        return curve[key]
 
     def specific_invert(self, df):
-        lSignal = df.apply(self.quant2signal);
-        return lSignal;
+        return df.apply(self.quant2signal)
 
     def dump_values(self):
         logger = tsutil.get_pyaf_logger();
@@ -263,14 +232,12 @@ class cSignalTransform_BoxCox(cAbstractSignalTransform):
         self.mLambda = iLambda;
         self.mComplexity = 2 + abs(self.mLambda);
         self.mScaling = True;
-        pass
 
     def get_name(self, iSig):
-        return "Box_Cox_" + str(self.mLambda) + "_" + str(iSig);
+        return f"Box_Cox_{str(self.mLambda)}_{str(iSig)}";
 
     def specific_fit(self, sig):
-        self.mFormula = "BoxCox(Lambda=" + str(self.mLambda) + ")";
-        pass
+        self.mFormula = f"BoxCox(Lambda={str(self.mLambda)})";
     
 
     def specific_apply(self, df):
@@ -281,8 +248,7 @@ class cSignalTransform_BoxCox(cAbstractSignalTransform):
             return log_df;
         lLimit = 5.0 / abs(self.mLambda)
         log_df = log_df.clip(-lLimit , lLimit)
-        df1 = (np.exp(log_df * self.mLambda) - 1) / self.mLambda
-        return df1;
+        return (np.exp(log_df * self.mLambda) - 1) / self.mLambda
 
     def invert_value(self, y):
         x = y;
@@ -291,11 +257,9 @@ class cSignalTransform_BoxCox(cAbstractSignalTransform):
         return np.exp(x1).clip(0, 1) ;        
     
     def specific_invert(self, df):
-        if(abs(self.mLambda) <= 0.001):
-            df_orig = np.exp(df).clip(0, 1);
-            return df_orig;
-        df_pos = df.apply(self.invert_value);
-        return df_pos;
+        if (abs(self.mLambda) <= 0.001):
+            return np.exp(df).clip(0, 1)
+        return df.apply(self.invert_value)
 
     def dump_values(self):
         logger = tsutil.get_pyaf_logger();
@@ -310,27 +274,23 @@ class cSignalTransform_Differencing(cAbstractSignalTransform):
         self.mFormula = "Difference";
         self.mComplexity = 1;
         self.mScaling = True;
-        pass
 
     def get_name(self, iSig):
-        return "Diff_" + str(iSig);
+        return f"Diff_{str(iSig)}";
 
     def specific_fit(self, sig):
         # print(sig.head());
         self.mFirstValue = sig.iloc[0];
-        pass
     
 
     def specific_apply(self, df):
         df_shifted = df.shift(1)
         df_shifted.iloc[0] = self.mFirstValue;
-        lResult = df - df_shifted
-        return lResult
+        return df - df_shifted
     
     def specific_invert(self, df):
         df_cumsum = df.cumsum();
-        df_orig = df_cumsum + self.mFirstValue;
-        return df_orig;
+        return df_cumsum + self.mFirstValue
 
     def dump_values(self):
         logger = tsutil.get_pyaf_logger();
@@ -345,14 +305,12 @@ class cSignalTransform_RelativeDifferencing(cAbstractSignalTransform):
         self.mFormula = "RelativeDifference";
         self.mComplexity = 1;
         self.mScaling = True;
-        pass
 
     def get_name(self, iSig):
-        return "RelDiff_" + str(iSig);
+        return f"RelDiff_{str(iSig)}";
     
     def specific_fit(self, sig):
         self.mFirstValue = sig.iloc[0];
-        pass
 
     def specific_apply(self, df):
         lEps = 1e-2
@@ -374,8 +332,7 @@ class cSignalTransform_RelativeDifferencing(cAbstractSignalTransform):
         lLogRate = np.log(rate.clip(lEps, +1.0e+2))
         lCumSum = lLogRate.cumsum()
         lCumSum = lCumSum.clip(lEps , +1.0e+2)
-        lResult = np.exp(lCumSum)
-        return lResult
+        return np.exp(lCumSum)
         
     def specific_invert(self, df):
         # print("RelDiff_invert_DEBUG_START" , self.mFirstValue, df.values[0:10]);
@@ -400,10 +357,9 @@ class cSignalTransform_Logit(cAbstractSignalTransform):
         self.mFormula = "Logit";
         self.mComplexity = 1;
         self.mScaling = True;
-        pass
 
     def get_name(self, iSig):
-        return "Logit_" + str(iSig);
+        return f"Logit_{str(iSig)}";
 
 
     def is_applicable(self, sig):
@@ -415,24 +371,18 @@ class cSignalTransform_Logit(cAbstractSignalTransform):
     def logit(self, x):
         eps = 1.0e-2;
         x1 = np.clip(x, eps, 1 - eps)
-        y = np.log(x1) - np.log(1 - x1);
-        return y;
+        return np.log(x1) - np.log(1 - x1)
 
     def inv_logit(self, y):
         y1 = np.clip(y, -5, 5)
         x = np.exp(y1);
-        p = x / (1 + x);
-        return p;
+        return x / (1 + x)
 
     def specific_apply(self, df):
-        # logit
-        df1 = df.apply(self.logit);
-        return df1;
+        return df.apply(self.logit)
     
     def specific_invert(self, df):
-        # logit
-        df1 = df.apply(self.inv_logit);
-        return df1;
+        return df.apply(self.inv_logit)
 
     def dump_values(self):
         logger = tsutil.get_pyaf_logger();
@@ -452,22 +402,19 @@ class cSignalTransform_Anscombe(cAbstractSignalTransform):
         self.mFormula = "Anscombe";
         self.mConstant = 3.0/ 8.0;
         self.mScaling = True;
-        pass
 
     def get_name(self, iSig):
-        return "Anscombe_" + str(iSig);
+        return f"Anscombe_{str(iSig)}";
     
     def specific_fit(self , sig):
         pass
     
     def specific_apply(self, sig):
-        y = sig.apply(lambda x : 2 * np.sqrt(x + self.mConstant));
-        return y;
+        return sig.apply(lambda x : 2 * np.sqrt(x + self.mConstant))
     
     def specific_invert(self, sig):
         y1 = sig.clip(1.22, 2.34)
-        x = y1.apply(lambda x : ((x/2 * x/2) - self.mConstant))
-        return x;
+        return y1.apply(lambda x : ((x/2 * x/2) - self.mConstant))
 
     def dump_values(self):
         logger = tsutil.get_pyaf_logger();
@@ -484,22 +431,19 @@ class cSignalTransform_Fisher(cAbstractSignalTransform):
         self.mFormula = "Fisher";
         self.mComplexity = 1;
         self.mScaling = True;
-        pass
 
     def get_name(self, iSig):
-        return "Fisher_" + str(iSig);
+        return f"Fisher_{str(iSig)}";
     
     def specific_fit(self , sig):
         pass
     
     def specific_apply(self, sig):
         eps = 1.0e-2;
-        y = sig.apply(lambda x : np.arctanh(np.clip(x , -1 + eps , 1.0 - eps)));
-        return y;
+        return sig.apply(lambda x : np.arctanh(np.clip(x , -1 + eps , 1.0 - eps)))
     
     def specific_invert(self, sig):
-        x = sig.apply(np.tanh);
-        return x;
+        return sig.apply(np.tanh)
 
     def dump_values(self):
         logger = tsutil.get_pyaf_logger();
@@ -512,30 +456,26 @@ def create_tranformation(iName , arg):
 
     if(iName == 'Difference'):
         return cSignalTransform_Differencing()
-    
+
     if(iName == 'RelativeDifference'):
         return cSignalTransform_RelativeDifferencing()
-            
+
     if(iName == 'Integration'):
         return cSignalTransform_Accumulate()
-        
+
     if(iName == 'BoxCox'):
         return cSignalTransform_BoxCox(arg)
-    
+
     if(iName == 'Quantization'):
         return cSignalTransform_Quantize(arg)
-        
+
     if(iName == 'Logit'):
         return cSignalTransform_Logit()
-        
+
     if(iName == 'Fisher'):
         return cSignalTransform_Fisher()
-        
-    if(iName == 'Anscombe'):
-        return cSignalTransform_Anscombe()
 
-    # assert(0)
-    return None
+    return cSignalTransform_Anscombe() if (iName == 'Anscombe') else None
 
 
 class cTransformationEstimator:
@@ -546,8 +486,7 @@ class cTransformationEstimator:
 
     def validateTransformation(self , transf , df, iTime, iSignal):
         lName = transf.get_name("");
-        lIsApplicable = transf.is_applicable(df[iSignal]);
-        if(lIsApplicable):
+        if lIsApplicable := transf.is_applicable(df[iSignal]):
             # print("Adding Transformation " , lName);
             self.mTransformList = self.mTransformList + [transf];
 

@@ -24,8 +24,7 @@ class cAbstract_RNN_Model(tsar.cAbstractAR):
         # return iInputs;
 
     def reshape_inputs(self, iInputs):
-        lInputs = np.reshape(iInputs, (iInputs.shape[0], 1, iInputs.shape[1]))
-        return lInputs;
+        return np.reshape(iInputs, (iInputs.shape[0], 1, iInputs.shape[1]))
 
     def fit(self):
         # print("ESTIMATE_RNN_MODEL_START" , self.mCycleResidueName);
@@ -35,7 +34,7 @@ class cAbstract_RNN_Model(tsar.cAbstractAR):
 
         # print("ESTIMATE_RNN_MODEL_STEP1" , self.mOutName);
 
-        series = self.mCycleResidueName; 
+        series = self.mCycleResidueName;
         self.mTime = self.mTimeInfo.mTime;
         self.mSignal = self.mTimeInfo.mSignal;
         lAREstimFrame = self.mSplit.getEstimPart(self.mARFrame)
@@ -56,8 +55,8 @@ class cAbstract_RNN_Model(tsar.cAbstractAR):
 
         N = lARInputs.shape[0];
         NEstim = (N * 4) // 5;
-        estimX = lARInputs[0:NEstim]
-        estimY = lARTarget[0:NEstim]
+        estimX = lARInputs[:NEstim]
+        estimY = lARTarget[:NEstim]
         valX = lARInputs[ NEstim : ]
         valY = lARTarget[ NEstim : ]
 
@@ -85,7 +84,7 @@ class cAbstract_RNN_Model(tsar.cAbstractAR):
         # print("PREDICTED_SHAPE" , self.mARFrame.shape, lPredicted.shape);
 
         # print("ESTIMATE_RNN_MODEL_STEP7" , self.mOutName);
-            
+
         self.mARFrame[self.mOutName] = np.reshape(lPredicted, (lPredicted.shape[0]))
 
         # print("ESTIMATE_RNN_MODEL_STEP8" , self.mOutName);
@@ -133,8 +132,8 @@ class cMLP_Model(cAbstract_RNN_Model):
         self.mModel.reset_states();
         # print(cMLP_Model.gTemplateModels[self.mNbLags].__dict__);
         # print(self.mModel.__dict__);
-        
-        self.mFormula = "MLP(" + str(self.mNbLags) + ")";
+
+        self.mFormula = f"MLP({str(self.mNbLags)})";
         self.mOutName = self.mCycleResidueName +  '_MLP(' + str(self.mNbLags) + ")";
 
     def __getstate__(self):
@@ -188,7 +187,7 @@ class cLSTM_Model(cAbstract_RNN_Model):
         # print(cLSTM_Model.gTemplateModels[self.mNbLags].__dict__);
         # print(self.mModel.__dict__);
 
-        self.mFormula = "LSTM(" + str(self.mNbLags) + ")";
+        self.mFormula = f"LSTM({str(self.mNbLags)})";
         self.mOutName = self.mCycleResidueName +  '_LSTM(' + str(self.mNbLags) + ")";
 
 

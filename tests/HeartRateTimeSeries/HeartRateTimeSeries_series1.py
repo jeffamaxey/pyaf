@@ -38,10 +38,15 @@ dfapp_out = lEngine.forecast(dfapp_in, H);
 #dfapp_out.to_csv("outputs/sof_example_apply_out.csv")
 dfapp_out.tail(2 * H)
 print("Forecast Columns " , dfapp_out.columns);
-Forecast_DF = dfapp_out[[lDateVar , lSignalVar,
-                         lSignalVar + '_Forecast' ,
-                         lSignalVar + '_Forecast_Lower_Bound',
-                         lSignalVar + '_Forecast_Upper_Bound']]
+Forecast_DF = dfapp_out[
+    [
+        lDateVar,
+        lSignalVar,
+        f'{lSignalVar}_Forecast',
+        f'{lSignalVar}_Forecast_Lower_Bound',
+        f'{lSignalVar}_Forecast_Upper_Bound',
+    ]
+]
 print(Forecast_DF.info())
 print("Forecasts\n" , Forecast_DF.tail(2*H));
 

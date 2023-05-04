@@ -151,7 +151,7 @@ def prediction_interval_plot_as_png_base64(df, time, signal, estimator, lower, u
     return png_b64
 
 
-def quantiles_plot_internal(df, time, signal, estimator, iQuantiles, name = None, format='png', horizon = 1) :
+def quantiles_plot_internal(df, time, signal, estimator, iQuantiles, name = None, format='png', horizon = 1):
     assert(df.shape[0] > 0)
     assert(df.shape[1] > 0)
     assert(time in df.columns)
@@ -167,7 +167,7 @@ def quantiles_plot_internal(df, time, signal, estimator, iQuantiles, name = None
     if(name is not None):
         plt.switch_backend('Agg')
     lMin, lMax = df1[lQuantileNames].values.min(), df1[lQuantileNames].values.max()
-    
+
     cm = plt.cm.get_cmap('RdYlBu_r')
     fig, axs = plt.subplots(horizon, 1, figsize=(12, 12), squeeze = True)
     # plt.subplots_adjust(hspace=1)
@@ -186,7 +186,7 @@ def quantiles_plot_internal(df, time, signal, estimator, iQuantiles, name = None
             axs[h].set_title('Forecast Quantiles')
         axs[h].set_xlim((lMin,lMax))
         # axs[h].set_ylim((0, 1.0))
-        axs[h].set_ylabel('H_' + str(h + 1))
+        axs[h].set_ylabel(f'H_{str(h + 1)}')
         axs[h].set_yticklabels([])
         if(h < (horizon - 1)):
             axs[h].set_xlabel('')
@@ -217,7 +217,7 @@ def qqplot_residues(df , residue):
     pass
 
 def build_record_label(labels_list):
-    out = "<f0>" + str(labels_list[0]);
+    out = f"<f0>{str(labels_list[0])}";
     i = 1;
     for l in labels_list[1:]:
         out = out + " | <f" + str(i) + "> " + str(l) ;

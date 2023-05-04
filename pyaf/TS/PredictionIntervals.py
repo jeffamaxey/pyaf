@@ -28,7 +28,7 @@ class cPredictionIntervalsEstimator:
         self.mHorizon = self.mModel.mTimeInfo.mHorizon;
         lTimeColumn = self.mTime;
         lSignalColumn = self.mSignal;
-        lForecastColumn = str(self.mSignal) + "_Forecast";
+        lForecastColumn = f"{str(self.mSignal)}_Forecast";
         df = self.mModel.mTrend.mSignalFrame.reset_index();
         N = df.shape[0];
         (lOriginalFit, lOriginalForecast, lOriginalTest) = self.mModel.mTimeInfo.mSplit.cutFrame(df);
@@ -55,20 +55,28 @@ class cPredictionIntervalsEstimator:
 
     def dump_detailed(self):
         logger = tsutil.get_pyaf_logger();
-        lForecastColumn = str(self.mSignal) + "_Forecast";
+        lForecastColumn = f"{str(self.mSignal)}_Forecast";
         for h in range(0 , self.mHorizon):
             lHorizonName = lForecastColumn + "_" + str(h + 1);
             hn = lHorizonName;
-            logger.info("CONFIDENCE_INTERVAL_DUMP_FIT " +str(hn) + " " + str(self.mFitPerformances[hn].mL2) + " " + str(self.mFitPerformances[hn].mMAPE));
-            logger.info("CONFIDENCE_INTERVAL_DUMP_FORECAST " +str(hn) + " " + str(self.mForecastPerformances[hn].mL2) + " " + str(self.mForecastPerformances[hn].mMAPE));
-            logger.info("CONFIDENCE_INTERVAL_DUMP_TEST " +str(hn) + " " + str(self.mTestPerformances[hn].mL2) + " " + str(self.mTestPerformances[hn].mMAPE));
+            logger.info(
+                f"CONFIDENCE_INTERVAL_DUMP_FIT {str(hn)} {str(self.mFitPerformances[hn].mL2)} {str(self.mFitPerformances[hn].mMAPE)}"
+            );
+            logger.info(
+                f"CONFIDENCE_INTERVAL_DUMP_FORECAST {str(hn)} {str(self.mForecastPerformances[hn].mL2)} {str(self.mForecastPerformances[hn].mMAPE)}"
+            );
+            logger.info(
+                f"CONFIDENCE_INTERVAL_DUMP_TEST {str(hn)} {str(self.mTestPerformances[hn].mL2)} {str(self.mTestPerformances[hn].mMAPE)}"
+            );
 
 
     def dump(self):
         logger = tsutil.get_pyaf_logger();
-        lForecastColumn = str(self.mSignal) + "_Forecast";
+        lForecastColumn = f"{str(self.mSignal)}_Forecast";
         for h in range(0 , self.mHorizon):
             lHorizonName = lForecastColumn + "_" + str(h + 1);
             hn = lHorizonName;
-            logger.info("CONFIDENCE_INTERVAL_DUMP_FORECAST " + str(hn) + " " + str(self.mForecastPerformances[hn].mL2));
+            logger.info(
+                f"CONFIDENCE_INTERVAL_DUMP_FORECAST {str(hn)} {str(self.mForecastPerformances[hn].mL2)}"
+            );
             

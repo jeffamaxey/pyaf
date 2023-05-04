@@ -89,8 +89,7 @@ def load_cashflows() :
 
 
 def to_date(idatetime):
-    d = datetime.date(idatetime.year, idatetime.month, idatetime.day);
-    return d;
+    return datetime.date(idatetime.year, idatetime.month, idatetime.day)
 
 # @profile    
 def load_ozone() :
@@ -190,11 +189,10 @@ def load_ozone_exogenous_categorical() :
 
 
 def add_some_noise(x , p , min_sig, max_sig, e , f):
-    if(max_sig > min_sig):
+    if (max_sig > min_sig):
         delta = (x - min_sig) / (max_sig - min_sig);
-        if( (delta >= e) and (delta <= f) ):
-            if(np.random.random() < p):
-                return "A";
+        if ((delta >= e) and (delta <= f)) and (np.random.random() < p):
+            return "A";
     return "0";
 
 
@@ -262,26 +260,21 @@ def apply_old_transform(signal , transform):
 def apply_transform(signal , transform):
     import pyaf.TS.Signal_Transformation as tstransf
     arg = None
-    if(transform == "Quantization"):
-        arg = 10
-    if(transform == "BoxCox"):
+    if transform == "BoxCox":
         arg = 0
+    elif transform == "Quantization":
+        arg = 10
     tr = tstransf.create_tranformation(transform , arg)
     transformed = None
-    if(tr is None):
-        transformed = apply_old_transform(signal, transform)
-    else :
-        tr.fit(signal)
-        transformed = tr.invert(signal)
-        # print(signal.head())
-        # print(transformed.head())
-    return transformed
+    if (tr is None):
+        return apply_old_transform(signal, transform)
+    tr.fit(signal)
+    return tr.invert(signal)
 
-def generate_random_TS_name(N , FREQ, seed, trendtype, cycle_length, transform, sigma = 1.0, exog_count = 20, ar_order = 0) :
-    lName = "Signal_" + str(N) + "_" + str(FREQ) +  "_" + str(seed)  + "_" + str(trendtype) +  "_" + str(cycle_length)   + "_" + str(transform)   + "_" + str(sigma) + "_" + str(exog_count) ;
-    return lName
+def generate_random_TS_name(N , FREQ, seed, trendtype, cycle_length, transform, sigma = 1.0, exog_count = 20, ar_order = 0):
+    return f"Signal_{str(N)}_{str(FREQ)}_{str(seed)}_{str(trendtype)}_{str(cycle_length)}_{str(transform)}_{str(sigma)}_{str(exog_count)}"
     
-def generate_random_TS(N , FREQ, seed, trendtype, cycle_length, transform, sigma = 1.0, exog_count = 20, ar_order = 0) :
+def generate_random_TS(N , FREQ, seed, trendtype, cycle_length, transform, sigma = 1.0, exog_count = 20, ar_order = 0):
     tsspec = cTimeSeriesDatasetSpec();
     lName = generate_random_TS_name(N , FREQ, seed, trendtype, cycle_length, transform, sigma, exog_count, ar_order)
     tsspec.mName = lName
@@ -319,7 +312,7 @@ def generate_random_TS(N , FREQ, seed, trendtype, cycle_length, transform, sigma
     tsspec.mExogenousDataFrame = pd.DataFrame();
     tsspec.mExogenousDataFrame['Date'] = df_train['Date']
     for e in range(exog_count):
-        label = "exog_" + str(e+1);
+        label = f"exog_{str(e + 1)}";
         tsspec.mExogenousDataFrame[label] = df_train['Signal'].apply(
             lambda x : add_some_noise(x , 0.1 , 
                                       min_sig, 
@@ -340,14 +333,12 @@ def generate_random_TS(N , FREQ, seed, trendtype, cycle_length, transform, sigma
     tsspec.mTimeVar = "Date";
     tsspec.mSignalVar = "Signal";
     lHorizon = min(12, max(1, N // 30));
-    tsspec.mHorizon = {}
-    tsspec.mHorizon[tsspec.mSignalVar] = lHorizon
-    tsspec.mHorizon[tsspec.mName] = lHorizon
+    tsspec.mHorizon = {tsspec.mSignalVar: lHorizon, tsspec.mName: lHorizon}
     tsspec.mFullDataset = df_train;
     tsspec.mFullDataset[tsspec.mName] = tsspec.mFullDataset['Signal'];
     tsspec.mPastData = df_train[:-lHorizon];
     tsspec.mFutureData = df_train.tail(lHorizon);
-    
+
     return tsspec
 
 
@@ -361,11 +352,7 @@ def load_NN5():
     trainfile = "https://raw.githubusercontent.com/antoinecarme/pyaf/master/data/NN5-Final-Dataset.csv"
     tsspec.mFullDataset = pd.read_csv(trainfile, sep='\t', header=0, engine='python');
     tsspec.mFullDataset['Day'] = tsspec.mFullDataset['Day'].apply(lambda x : datetime.datetime.strptime(x, "%d-%b-%y"))
-    # tsspec.mFullDataset = tsspec.mFullDataset
-    # tsspec.mFullDataset.fillna(method = "ffill", inplace = True);
-    tsspec.mHorizon = {};
-    for sig in tsspec.mFullDataset.columns:
-        tsspec.mHorizon[sig] = 56
+    tsspec.mHorizon = {sig: 56 for sig in tsspec.mFullDataset.columns}
 #    df_test = tsspec.mFullDataset.tail(tsspec.mHorizon);
     df_train = tsspec.mFullDataset;
 
@@ -373,7 +360,7 @@ def load_NN5():
     tsspec.mSignalVar = "Signal";
     # tsspec.mPastData = df_train[:-tsspec.mHorizon];
     # tsspec.mFutureData = df_train.tail(tsspec.mHorizon);
-    
+
     return tsspec
 
 
@@ -385,10 +372,7 @@ def load_NN3_part1():
     trainfile = "https://raw.githubusercontent.com/antoinecarme/pyaf/master/data/NN3-Final-Dataset-part1.csv"
     tsspec.mFullDataset = pd.read_csv(trainfile, sep='\t', header=0, engine='python');
     tsspec.mFullDataset['Date'] = np.arange(0, tsspec.mFullDataset.shape[0])
-    #    tsspec.mFullDataset.fillna(method = "ffill", inplace = True);
-    tsspec.mHorizon = {};
-    for sig in tsspec.mFullDataset.columns:
-        tsspec.mHorizon[sig] = 18
+    tsspec.mHorizon = {sig: 18 for sig in tsspec.mFullDataset.columns}
     #df_test = tsspec.mFullDataset.tail(tsspec.mHorizon);
     df_train = tsspec.mFullDataset;
     #.head(tsspec.mFullDataset.shape[0] - tsspec.mHorizon);
@@ -408,9 +392,7 @@ def load_NN3_part2():
 #    tsspec.mFullDataset.fillna(method = "ffill", inplace = True);
     #df_test = tsspec.mFullDataset.tail(tsspec.mHorizon);
     df_train = tsspec.mFullDataset
-    tsspec.mHorizon = {};
-    for sig in tsspec.mFullDataset.columns:
-        tsspec.mHorizon[sig] = 18
+    tsspec.mHorizon = {sig: 18 for sig in tsspec.mFullDataset.columns}
     #.head(tsspec.mFullDataset.shape[0] - tsspec.mHorizon);
     tsspec.mTimeVar = "Date";
     tsspec.mSignalVar = "Signal";
@@ -451,19 +433,18 @@ def load_MWH_dataset(name):
     # print(df_train.info())
     if(df_train[lSignal].dtype == np.object):
         df_train[lSignal] = df_train[lSignal].astype(np.float64); ## apply(lambda x : float(str(x).replace(" ", "")));
-    
+
     # df_train[lSignal] = df_train[lSignal].apply(float)
 
     tsspec.mFullDataset = df_train;
     # print(tsspec.mFullDataset.info())
     tsspec.mTimeVar = lTime;
     tsspec.mSignalVar = lSignal;
-    tsspec.mHorizon = {};
     lHorizon = 1
-    tsspec.mHorizon[lSignal] = lHorizon
+    tsspec.mHorizon = {lSignal: lHorizon}
     tsspec.mPastData = df_train[:-lHorizon];
     tsspec.mFutureData = df_train.tail(lHorizon);
-    
+
     return tsspec
 
 
@@ -631,13 +612,13 @@ def load_M3_Other_comp() :
     return tsspec
 
 # @profile    
-def load_M4_comp(iType = None) :
+def load_M4_comp(iType = None):
     """
     generated by script data/m4comp.R using the excellent M4Comp R package.
     """
 
     tsspecs = {};
-    
+
     trainfile = "https://github.com/antoinecarme/pyaf/blob/master/data/M4Comp/M4Comp_" + iType + ".csv.gz?raw=true"
     # trainfile = "data/M4Comp/M4Comp_" + iType + ".csv.gz"
 
@@ -661,8 +642,7 @@ def load_M4_comp(iType = None) :
         tsspec.mTimeVar = "Date";
         tsspec.mSignalVar = series_name;
         tsspec.mFullDataset.reindex()
-        tsspec.mHorizon = {};
-        tsspec.mHorizon[series_name] = lHorizons['H'][i];
+        tsspec.mHorizon = {series_name: lHorizons['H'][i]};
         tsspec.mCategory = "M4Comp";
         tsspecs[tsspec.mName] = tsspec;
 
@@ -677,15 +657,15 @@ def get_stock_web_link():
     print("ACQUIRED_YAHOO_LINKS" , len(YAHOO_LINKS_DATA));
     return YAHOO_LINKS_DATA;
 
-def load_yahoo_stock_price(symbol_list_key, stock , iLocal = True, YAHOO_LINKS_DATA = None) :
+def load_yahoo_stock_price(symbol_list_key, stock , iLocal = True, YAHOO_LINKS_DATA = None):
     filename = YAHOO_LINKS_DATA.get(symbol_list_key).get(stock);
     if(filename is None):
         raise Exception("MISSING " + symbol_list_key + "." + stock)
-        
+
     # print("YAHOO_DATA_LINK" , stock, filename);
 
     tsspec = cTimeSeriesDatasetSpec();
-    tsspec.mName = "Yahoo_Stock_Price_" + symbol_list_key + "." + stock 
+    tsspec.mName = "Yahoo_Stock_Price_" + symbol_list_key + "." + stock
     tsspec.mDescription = "Yahoo Stock Price using yahoo-finance package"
     df_train = pd.DataFrame();
     assert(iLocal)
@@ -706,8 +686,7 @@ def load_yahoo_stock_price(symbol_list_key, stock , iLocal = True, YAHOO_LINKS_D
     if(lHorizon > tsspec.mFullDataset.shape[0]):
         # nysecomp/yahoo_VRS.csv is too small
         lHorizon = 1
-    tsspec.mHorizon = {};
-    tsspec.mHorizon[stock] = lHorizon
+    tsspec.mHorizon = {stock: lHorizon};
     tsspec.mPastData = tsspec.mFullDataset[:-lHorizon];
     tsspec.mFutureData = tsspec.mFullDataset.tail(lHorizon);
 
@@ -747,15 +726,15 @@ def load_yahoo_stock_prices(symbol_list_key, stock = None) :
 def generate_datasets(ds_type = "S", iName=None):
     datasets = {};
     lRange_N = range(20, 101, 20)
-    if(ds_type == "M"):
-        lRange_N = range(150, 501, 50)
-    if(ds_type == "L"):
+    if ds_type == "L":
         lRange_N = range(600, 2001, 100)
-    if(ds_type == "XL"):
+    elif ds_type == "M":
+        lRange_N = range(150, 501, 50)
+    elif ds_type == "XL":
         lRange_N = range(2500, 8000, 500)
 
     lNames = {}
-    
+
     for N in lRange_N:
         for trend in ["constant" , "linear" , "poly"]:
             for cycle_length in range(0, N // 4 ,  max(N // 16 , 1)):
@@ -770,7 +749,7 @@ def generate_datasets(ds_type = "S", iName=None):
                                     lNames[lName] = (N , 'D', seed, trend,
                                                      cycle_length, transf,
                                                      sigma, exogc)
-    for (lName, args) in lNames.items():
+    for args in lNames.values():
         ds = generate_random_TS(*args)
         ds.mCategory = "ARTIFICIAL_" + ds_type;
         datasets[ds.mName] = ds
@@ -810,34 +789,33 @@ def load_AU_hierarchical_dataset():
 
     df_train = pd.read_csv(trainfile, sep=r',', engine='python', skiprows=0);
     df_train[lDateColumn] = df_train[lDateColumn].apply(lambda x : datetime.datetime.strptime(x, "%Y-%m-%d"))
-    
+
     tsspec.mTimeVar = lDateColumn;
     tsspec.mSignalVar = None;
     tsspec.mHorizon = 12;
     tsspec.mPastData = df_train[:-tsspec.mHorizon];
     tsspec.mFutureData = df_train.tail(tsspec.mHorizon);
 
-    rows_list = [];
-    # Sydney    NSW  Melbourne    VIC  BrisbaneGC    QLD  Capitals Other
-    rows_list.append(['Sydney' , 'NSW_State' , 'Australia']);
-    rows_list.append(['NSW' , 'NSW_State' , 'Australia']);
-    rows_list.append(['Melbourne' , 'VIC_State' , 'Australia']);
-    rows_list.append(['VIC' , 'VIC_State' , 'Australia']);
-    rows_list.append(['BrisbaneGC' , 'QLD_State' , 'Australia']);
-    rows_list.append(['QLD' , 'QLD_State' , 'Australia']);
-    rows_list.append(['Capitals' , 'Other_State' , 'Australia']);
-    rows_list.append(['Other' , 'Other_State' , 'Australia']);
-
+    rows_list = [
+        ['Sydney', 'NSW_State', 'Australia'],
+        ['NSW', 'NSW_State', 'Australia'],
+        ['Melbourne', 'VIC_State', 'Australia'],
+        ['VIC', 'VIC_State', 'Australia'],
+        ['BrisbaneGC', 'QLD_State', 'Australia'],
+        ['QLD', 'QLD_State', 'Australia'],
+        ['Capitals', 'Other_State', 'Australia'],
+        ['Other', 'Other_State', 'Australia'],
+    ];
     lLevels = ['City' , 'State' , 'Country'];
-    lHierarchy = {};
-    lHierarchy['Levels'] = lLevels;
-    lHierarchy['Data'] = pd.DataFrame(rows_list, columns =  lLevels);
-    lHierarchy['Type'] = "Hierarchical";
-    
+    lHierarchy = {
+        'Levels': lLevels,
+        'Data': pd.DataFrame(rows_list, columns=lLevels),
+        'Type': "Hierarchical",
+    };
     print(lHierarchy['Data'].head(lHierarchy['Data'].shape[0]));
 
     tsspec.mHierarchy = lHierarchy;
-    
+
     return tsspec
 
 
@@ -847,33 +825,34 @@ def load_AU_infant_grouped_dataset():
     tsspec = cTimeSeriesDatasetSpec();
     tsspec.mName = "Ozone"
     tsspec.mDescription = "https://cran.r-project.org/web/packages/hts/hts.pdf";
-    
+
     trainfile = "data/Hierarchical/infant_gts.csv";
     lDateColumn = 'Index'
 
     df_train = pd.read_csv(trainfile, sep=r',', engine='python', skiprows=0);
     # df_train[lDateColumn] = df_train[lDateColumn].apply(lambda x : datetime.datetime.strptime(x, "%Y-%m-%d"))
-    
+
     tsspec.mTimeVar = lDateColumn;
     tsspec.mSignalVar = None;
     tsspec.mHorizon = 12;
     tsspec.mPastData = df_train[:-tsspec.mHorizon];
     tsspec.mFutureData = df_train.tail(tsspec.mHorizon);
 
-    lGroups = {};
-    lGroups["State"] = ["NSW","VIC","QLD","SA","WA","NT","ACT","TAS"];
-    lGroups["Gender"] = ["female","male"];
+    lGroups = {
+        "State": ["NSW", "VIC", "QLD", "SA", "WA", "NT", "ACT", "TAS"],
+        "Gender": ["female", "male"],
+    };
     # lGroups["Gender1"] = ["femme","homme"];
     # lGroups["age"] = ["1", "2","3"];
-    lHierarchy = {};
-    lHierarchy['Levels'] = None;
-    lHierarchy['Data'] = None;
-    lHierarchy['Groups']= lGroups;
-    lHierarchy['GroupOrder']= ["State" , "Gender"]; # by state first, then by gender
-    lHierarchy['Type'] = "Grouped";
-    
+    lHierarchy = {
+        'Levels': None,
+        'Data': None,
+        'Groups': lGroups,
+        'GroupOrder': ["State", "Gender"],
+        'Type': "Grouped",
+    };
     tsspec.mHierarchy = lHierarchy;
-    
+
     return tsspec
 
 
@@ -909,12 +888,11 @@ def load_fpp2_dataset(name):
     # print(tsspec.mFullDataset.info())
     tsspec.mTimeVar = lTime;
     tsspec.mSignalVar = lSignal;
-    tsspec.mHorizon = {};
     lHorizon = 4
-    tsspec.mHorizon[lSignal] = lHorizon
+    tsspec.mHorizon = {lSignal: lHorizon}
     tsspec.mPastData = df_train[:-lHorizon];
     tsspec.mFutureData = df_train.tail(lHorizon);
-    
+
     return tsspec
 
 

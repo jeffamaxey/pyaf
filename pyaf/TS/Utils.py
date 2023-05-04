@@ -23,7 +23,7 @@ class cMemoize:
         self.mCache = {}
     def __call__(self, *args):
         # print("MEMOIZING" , self.mFunction , args)
-        if not args in self.mCache:
+        if args not in self.mCache:
             self.mCache[args] = self.mFunction(*args)
         return self.mCache[args]
     
@@ -71,8 +71,7 @@ def get_pyaf_timing_logger():
 
 def get_pyaf_hierarchical_logger():
     import logging;
-    logger = logging.getLogger('pyaf.hierarchical');
-    return logger;
+    return logging.getLogger('pyaf.hierarchical')
 
 
 

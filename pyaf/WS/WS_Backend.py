@@ -65,13 +65,16 @@ class cWSModel:
         self.mFullDataFrame.sort_values(by = self.mTimeVar, inplace = True);
         self.mExogenousDataFrame = None;
         self.mExogenousVariables = None;
-        if(self.mExogenousDataFile is not None):
+        if (self.mExogenousDataFile is not None):
             print(self.mExogenousDataFile)
             self.mExogenousDataFrame =  pd.read_csv(self.mExogenousDataFile, sep=r',', engine='python', nrows=1000);
             self.mExogenousDataFrame[self.mTimeVar] = self.mExogenousDataFrame[self.mTimeVar].apply(self.convert_string_to_date);
-            if(self.mExogenousVars is None):
-                self.mExogenousVariables = [col for col in self.mExogenousDataFrame.columns if
-                                            ((col != self.mTimeVar) and (col != self.mTimeVar))];
+            if (self.mExogenousVars is None):
+                self.mExogenousVariables = [
+                    col
+                    for col in self.mExogenousDataFrame.columns
+                    if col not in [self.mTimeVar, self.mTimeVar]
+                ];
             else:
                 self.mExogenousVariables = self.mExogenousVars.split();
         
@@ -114,7 +117,6 @@ class cWSModel:
         except Exception as e:
             # logger.error("FAILED_TO_GENERATE_CODE_FOR " + self.mName + " " + str(e));
             raise
-            pass
 
     def generatePlots(self):
         logger = logging.getLogger(__name__)
@@ -124,7 +126,6 @@ class cWSModel:
         except Exception as e:
             logger.error("FAILED_TO_GENERATE_PLOTS " + self.mName + " " + str(e));
             raise
-            pass
 
     def create(self):
         start_time = time.time()
@@ -149,9 +150,8 @@ class cWSModel:
     def generateName(self):
         import string, random
         chars = string.ascii_uppercase + string.digits;
-        lPrefix = "PYAF_MODEL_";
         lRandomChars = ''.join(random.choice(chars) for _ in range(6))
-        return lPrefix + lRandomChars;
+        return f"PYAF_MODEL_{lRandomChars}";
 
 
     def from_dict(self, json_dict):
@@ -172,13 +172,15 @@ class cWSModel:
         
 
     def get_dataset_info(self):
-        lDatasetInfo = {};
-        lDatasetInfo["Signal_Stats"] = {"Length" : str(self.mFullDataFrame[self.mSignalVar].shape[0]),
-                                        "Min" : str(self.mFullDataFrame[self.mSignalVar].min()),
-                                        "Max" : str(self.mFullDataFrame[self.mSignalVar].max()),
-                                        "Mean" : str(self.mFullDataFrame[self.mSignalVar].mean()),
-                                        "StdDev" : str(self.mFullDataFrame[self.mSignalVar].std()),
-                                        };
+        lDatasetInfo = {
+            "Signal_Stats": {
+                "Length": str(self.mFullDataFrame[self.mSignalVar].shape[0]),
+                "Min": str(self.mFullDataFrame[self.mSignalVar].min()),
+                "Max": str(self.mFullDataFrame[self.mSignalVar].max()),
+                "Mean": str(self.mFullDataFrame[self.mSignalVar].mean()),
+                "StdDev": str(self.mFullDataFrame[self.mSignalVar].std()),
+            }
+        };
         lDatasetInfo["Time_Stats"] = {"Min" : str(self.mFullDataFrame[self.mTimeVar].min()),
                                       "Max" : str(self.mFullDataFrame[self.mTimeVar].max()),
                                       };
@@ -206,8 +208,7 @@ class cWSModel:
             "Present" : self.mPresentTime,
             "Horizon" : self.mHorizon,
         }
-        lPlotLinks = {};
-        lPlotLinks["all"] = self.mURI + "model/" + self.mName + "/plot/" + "all";
+        lPlotLinks = {"all": self.mURI + "model/" + self.mName + "/plot/" + "all"};
         for k in ["Forecast", "Trend" , "Cycle", "AR", "Prediction_Intervals", "Forecast_Quantiles"]:
             lPlotLinks[k] = self.mURI + "model/" + self.mName + "/plot/" + k;
         lTrainOptionsDescription =  {
@@ -222,29 +223,27 @@ class cWSModel:
             "Name" : "Name used to identify the model in the API"
         }
 
-        lSQLLinks = {};
         lDialects = ['Default', 'postgresql', 'mssql', 'oracle', 'mysql', 'sybase', 'sqlite'];
-        for k in lDialects:
-            lSQLLinks[k] = self.mURI + "model/" + self.mName + "/SQL/" + k;
-
+        lSQLLinks = {
+            k: self.mURI + "model/" + self.mName + "/SQL/" + k for k in lDialects
+        }
         lMetaData = {
             "Name" : self.mName,
             "ModelFormat" : "0.1",
             "CreationDate" : str(self.mCreationDate),
             "Training_Time" : str(self.mTrainingTime)
             }
-        
-        obj_d = {
-            'MetaData' : [ lMetaData ],
-            'TrainOptions': [ lTrainOptions ],
-            'TrainOptionsHelp': [ lTrainOptionsDescription ],
-            "CSVFileInfo" : [ self.get_dataset_info() ],
-            "ModelInfo" : [lModelInfo],
-            "ForecastData" : [lForecastData],
-            "SQL" : [ lSQLLinks ],
-            "Plots" : [ lPlotLinks ]
+
+        return {
+            'MetaData': [lMetaData],
+            'TrainOptions': [lTrainOptions],
+            'TrainOptionsHelp': [lTrainOptionsDescription],
+            "CSVFileInfo": [self.get_dataset_info()],
+            "ModelInfo": [lModelInfo],
+            "ForecastData": [lForecastData],
+            "SQL": [lSQLLinks],
+            "Plots": [lPlotLinks],
         }
-        return obj_d
 
 
 class cFlaskBackend:
@@ -256,8 +255,7 @@ class cFlaskBackend:
 
     # Models
     def get_model(self, name):
-        model  = self.models.get(name);
-        return model;
+        return self.models.get(name)
 
 
     def add_model(self, json_dict):
@@ -273,8 +271,7 @@ class cFlaskBackend:
         return model;
 
     def remove_model(self, name):
-        model  = self.models.get(name);
-        if(model):
+        if model := self.models.get(name):
             del self.models[name];
         return None 
 

@@ -11,9 +11,7 @@ def is_signal_intermittent(iSeries, iOptions):
     series = iSeries - iSeries.min()
     zero_values = series[abs(series) < 1e-8]
     lZeroRate = zero_values.shape[0] / series.shape[0]
-    if(lZeroRate > iOptions.mCrostonOptions.mZeroRate):
-        return True
-    return False
+    return lZeroRate > iOptions.mCrostonOptions.mZeroRate
     
 
 class cCroston_Model(tsar.cAbstractAR):
@@ -25,9 +23,8 @@ class cCroston_Model(tsar.cAbstractAR):
 
     def dumpCoefficients(self, iMax=10):
         logger = tsutil.get_pyaf_logger();
-        logger.info("CROSTON_ALPHA " + str(self.mAlpha));
-        logger.info("CROSTON_METHOD " + str(self.mOptions.mCrostonOptions.mMethod));
-        pass
+        logger.info(f"CROSTON_ALPHA {str(self.mAlpha)}");
+        logger.info(f"CROSTON_METHOD {str(self.mOptions.mCrostonOptions.mMethod)}");
 
     def set_name(self):
         self.mOutName = self.mCycleResidueName +  '_CROSTON(' + str(self.mOptions.mCrostonOptions.mAlpha) + ')';
@@ -45,9 +42,8 @@ class cCroston_Model(tsar.cAbstractAR):
     def estimate_alpha(self, df):
         # print("CROSTON_OPTIONS" , self.mOptions.mCrostonOptions.__dict__)
         method = self.mOptions.mCrostonOptions.mMethod
-        if(self.mOptions.mCrostonOptions.mAlpha is not None):
+        if (self.mOptions.mCrostonOptions.mAlpha is not None):
             self.mAlpha = self.mOptions.mCrostonOptions.mAlpha
-            return 
         else:
             # choose the best alpha based on L2
             lPerfs = {}
@@ -60,9 +56,8 @@ class cCroston_Model(tsar.cAbstractAR):
                                        "CROSTON_SEL_" + '_Fit_' + str(alpha))
                 lPerfs[alpha] = lPerf.mL2
             self.mAlpha = min(lPerfs, key=lPerfs.get)
-            # print(lPerfs)
-            # print("CROSTON_OPTIMIZED_ALPHA" , self.mAlpha)
-            return
+
+        return
     
     def croston(self, df, horizon_index = 1):
         alpha =  self.mAlpha
@@ -77,8 +72,7 @@ class cCroston_Model(tsar.cAbstractAR):
             return x.mean() + np.zeros_like(x)
         from statsmodels.tsa.api import SimpleExpSmoothing
         lSES = SimpleExpSmoothing(x).fit(smoothing_level=alpha, optimized=False)
-        y = lSES.fittedvalues
-        return y
+        return lSES.fittedvalues
     
     def compute_forecast(self, df, alpha, method, horizon_index = 1):
         # print(df.shape)
@@ -96,7 +90,7 @@ class cCroston_Model(tsar.cAbstractAR):
         demand_times = pd.Series(list(q.index)) + 1
         a = demand_times - demand_times.shift(1).fillna(0.0)
         df2 = pd.DataFrame({'demand_time' : list(demand_times), 'q' : list(q) , 'a' : list(a) })
-        
+
         # Use statmopdels library to perform SES to avoid recursion and also avoid reinventing the wheel.
         df2['q_est'] = self.simple_ses(df2['q'].values, alpha)
         df2['a_est'] = self.simple_ses(df2['a'].values, alpha)
@@ -111,9 +105,9 @@ class cCroston_Model(tsar.cAbstractAR):
         df4 = df3.fillna(method='ffill')
         # fill first empty fit data with zero counts (when signal starts with zeros)
         i = 0
-        while(np.isnan(df4.loc[i , 'forecast'])):
+        while (np.isnan(df4.loc[i , 'forecast'])):
             df4.loc[i , 'forecast'] = 0.0
-            i = i + 1
+            i += 1
         df4['forecast'] = df4['forecast'] + self.mOffset
         return df4
         

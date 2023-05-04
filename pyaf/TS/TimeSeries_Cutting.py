@@ -22,38 +22,33 @@ class cCuttingInfo:
         assert(self.mTrainSize > 0);
         lEstEnd = int((self.mTrainSize - self.mHorizon) * self.mOptions.mEstimRatio);
         lValSize = self.mTrainSize - self.mHorizon - lEstEnd;
-        lTooSmall = False;
-        # training too small
-        if((self.mTrainSize < 30) or (lValSize < self.mHorizon)):
-            lTooSmall = True;
-        
-        if(lTooSmall):
-            self.mEstimStart = 0;
+        lTooSmall = self.mTrainSize < 30 or lValSize < self.mHorizon
+        if lTooSmall:
             self.mEstimEnd = self.mTrainSize;
             self.mValidStart = 0;
             self.mValidEnd = self.mTrainSize;
             self.mTestStart = 0;
-            self.mTestEnd = self.mTrainSize;
         else:
-            self.mEstimStart = 0;
             self.mEstimEnd = lEstEnd;
             self.mValidStart = self.mEstimEnd;
             self.mValidEnd = self.mTrainSize - self.mHorizon;
             self.mTestStart = self.mValidEnd;
-            self.mTestEnd = self.mTrainSize;
+
+        self.mTestEnd = self.mTrainSize;
+        self.mEstimStart = 0;
 
     def check_split(self, iSplit):
-        if(len(iSplit) != 3):
-            raise tsutil.PyAF_Error('Invalid Split ' + str(iSplit));
-        if(iSplit[0] < 0.0 or iSplit[0] > 1.0):
-            raise tsutil.PyAF_Error('Invalid Estimation Ratio ' + str(iSplit[0]));
-        if(iSplit[1] < 0.0 or iSplit[1] > 1.0):
-            raise tsutil.PyAF_Error('Invalid Validation Ratio ' + str(iSplit[1]));
-        if(iSplit[2] < 0.0 or iSplit[2] > 1.0):
-            raise tsutil.PyAF_Error('Invalid Test Ratio ' + str(iSplit[2]));
+        if (len(iSplit) != 3):
+            raise tsutil.PyAF_Error(f'Invalid Split {str(iSplit)}');
+        if (iSplit[0] < 0.0 or iSplit[0] > 1.0):
+            raise tsutil.PyAF_Error(f'Invalid Estimation Ratio {str(iSplit[0])}');
+        if (iSplit[1] < 0.0 or iSplit[1] > 1.0):
+            raise tsutil.PyAF_Error(f'Invalid Validation Ratio {str(iSplit[1])}');
+        if (iSplit[2] < 0.0 or iSplit[2] > 1.0):
+            raise tsutil.PyAF_Error(f'Invalid Test Ratio {str(iSplit[2])}');
         lTotal =  iSplit[0] + iSplit[1] + iSplit[2]
-        if(lTotal < 0 or lTotal > 1):
-            raise tsutil.PyAF_Error('Invalid Split Ratio Sum' + str(iSplit));
+        if (lTotal < 0 or lTotal > 1):
+            raise tsutil.PyAF_Error(f'Invalid Split Ratio Sum{str(iSplit)}');
 
             
     def set_split(self, iSplit):
@@ -80,12 +75,9 @@ class cCuttingInfo:
         else:
             self.set_default_split()
 
-        lStr = "CUTTING_PARAMETERS " + str(self.mTrainSize) + " Estimation = (" + str(self.mEstimStart) + " , " + str(self.mEstimEnd) + ")";
-        lStr += " Validation = (" + str(self.mValidStart) + " , " + str(self.mValidEnd) + ")";
-        lStr += " Test = (" + str(self.mTestStart) + " , " + str(self.mTestEnd) + ")";
-        #print(lStr);
-        
-        pass
+        lStr = f"CUTTING_PARAMETERS {str(self.mTrainSize)} Estimation = ({str(self.mEstimStart)} , {str(self.mEstimEnd)})";
+        lStr += f" Validation = ({str(self.mValidStart)} , {str(self.mValidEnd)})";
+        lStr += f" Test = ({str(self.mTestStart)} , {str(self.mTestEnd)})";
 
     def cutFrame(self, df):
         lFrameFit = df[self.mEstimStart : self.mEstimEnd];
@@ -94,18 +86,16 @@ class cCuttingInfo:
         return (lFrameFit, lFrameForecast, lFrameTest)
 
     def getEstimPart(self, df):
-        lFrameFit = df[self.mEstimStart : self.mEstimEnd];
-        return lFrameFit;
+        return df[self.mEstimStart : self.mEstimEnd]
 
     def getValidPart(self, df):
-        lFrameValid = df[self.mValidStart : self.mValidEnd];
-        return lFrameValid;
+        return df[self.mValidStart : self.mValidEnd]
 
 
     def info(self):
-        lStr2 += " Estimation = (" + str(self.mEstimStart) + " , " + str(self.mEstimEnd) + ")";
-        lStr2 += " Validation = (" + str(self.mValidStart) + " , " + str(self.mValidEnd) + ")";
-        lStr2 += " Test = (" + str(self.mTestStart) + " , " + str(self.mTestEnd) + ")";
-        lStr2 += " Horizon=" + str(self.mHorizon) +"";
+        lStr2 += f" Estimation = ({str(self.mEstimStart)} , {str(self.mEstimEnd)})";
+        lStr2 += f" Validation = ({str(self.mValidStart)} , {str(self.mValidEnd)})";
+        lStr2 += f" Test = ({str(self.mTestStart)} , {str(self.mTestEnd)})";
+        lStr2 += f" Horizon={str(self.mHorizon)}";
         return lStr2;
 

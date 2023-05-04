@@ -27,18 +27,21 @@ class cTimeInfo:
 
     def info(self):
         lStr2 = "TimeVariable='" + self.mTime +"'";
-        lStr2 += " TimeMin=" + str(self.mTimeMin) +"";
-        lStr2 += " TimeMax=" + str(self.mTimeMax) +"";
-        lStr2 += " TimeDelta=" + str(self.mTimeDelta) +"";
-        lStr2 += " Horizon=" + str(self.mHorizon) +"";
+        lStr2 += f" TimeMin={str(self.mTimeMin)}";
+        lStr2 += f" TimeMax={str(self.mTimeMax)}";
+        lStr2 += f" TimeDelta={str(self.mTimeDelta)}";
+        lStr2 += f" Horizon={str(self.mHorizon)}";
         return lStr2;
 
 
     def to_dict(self):
-        dict1 = {};
-        dict1["TimeVariable"] =  self.mTime;
-        dict1["TimeMinMax"] =  [str(self.mSignalFrame[self.mTime].min()) ,
-                                str(self.mSignalFrame[self.mTime].max())];
+        dict1 = {
+            "TimeVariable": self.mTime,
+            "TimeMinMax": [
+                str(self.mSignalFrame[self.mTime].min()),
+                str(self.mSignalFrame[self.mTime].max()),
+            ],
+        };
         dict1["Horizon"] =  self.mHorizon;
         return dict1;
 
@@ -50,17 +53,16 @@ class cTimeInfo:
         df[self.mOriginalSignal] = self.mSignalFrame[self.mOriginalSignal]
 
     def get_time_dtype(self):
-        # print(self.mTimeMax, type(self.mTimeMax))
-        lType = self.mSignalFrame[self.mTime].dtype;
-        return lType;
+        return self.mSignalFrame[self.mTime].dtype
 
     def checkDateTypesForNewDataset(self, df):
-        if(self.mTimeMax is not None):
+        if (self.mTimeMax is not None):
             lType1 = self.get_time_dtype();
             lType2 = df[self.mTime].dtype
-            if(lType1.kind != lType2.kind):
-                raise tsutil.PyAF_Error('Incompatible Time Column Type expected=' + str(lType1) + ' got: ' + str(lType2) + "'");
-                pass
+            if (lType1.kind != lType2.kind):
+                raise tsutil.PyAF_Error(
+                    f"Incompatible Time Column Type expected={str(lType1)} got: {str(lType2)}'"
+                );
         
 
     def transformDataset(self, df):
@@ -121,23 +123,20 @@ class cTimeInfo:
         lTimeBefore = lEstim[self.mTime].shift(1);
         # lTimeBefore.fillna(self.mTimeMin, inplace=True)
         N = lEstim.shape[0];
-        if(N == 1):
-            if(self.isPhysicalTime()):
-                self.mTimeDelta = np.timedelta64(1,'D');
-            else:
-                self.mTimeDelta = 1
+        if (N == 1):
+            self.mTimeDelta = np.timedelta64(1,'D') if (self.isPhysicalTime()) else 1
             return
         #print(self.mSignal, self.mTime, N);
         #print(lEstim[self.mTime].head());
         #print(lTimeBefore.head());
         lDiffs = lEstim[self.mTime][1:N] - lTimeBefore[1:N]
-        
+
         if(self.mOptions.mTimeDeltaComputationMethod == "USER"):
             self.mTimeDelta = self.mOptions.mUserTimeDelta;
-        if(self.mOptions.mTimeDeltaComputationMethod == "AVG"):
+        if (self.mOptions.mTimeDeltaComputationMethod == "AVG"):
             self.mTimeDelta = np.mean(lDiffs);
             type1 = self.mSignalFrame[self.mTime].dtype
-            if(type1.kind == 'i' or type1.kind == 'u'):
+            if type1.kind in ['i', 'u']:
                 self.mTimeDelta = int(self.mTimeDelta)
         if(self.mOptions.mTimeDeltaComputationMethod == "MODE"):
             delta_counts = pd.DataFrame(lDiffs.value_counts());
@@ -181,14 +180,12 @@ class cTimeInfo:
     def normalizeTime(self , iTime):
         if(self.mEstimCount == 1):
             return 0.0;
-        output =  ( iTime- self.mTimeMin) / self.mTimeMinMaxDiff
-        return output
+        return ( iTime- self.mTimeMin) / self.mTimeMinMaxDiff
 
 
     def cast_to_time_dtype(self, iTimeValue):
         lType1 = self.get_time_dtype();
-        lTimeValue = np.array([iTimeValue]).astype(lType1)[0];
-        return lTimeValue;
+        return np.array([iTimeValue]).astype(lType1)[0]
     
     def nextTime(self, df, iSteps):
         #print(df.tail(1)[self.mTime]);

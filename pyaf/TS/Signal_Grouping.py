@@ -18,9 +18,7 @@ class cSignalGrouping (sighier.cSignalHierarchy):
         self.mLabels2Tuples = {};
         
     def tuple_to_string(self, k):
-        str1 = "_".join(list(k));
-        # print(k , "=>" , str1);
-        return str1;
+        return "_".join(list(k))
     
     def add_level(self, previous_level):
         level = previous_level + 1;
@@ -46,7 +44,7 @@ class cSignalGrouping (sighier.cSignalHierarchy):
         # lGroups["State"] = ["NSW","VIC","QLD","SA","WA","NT","ACT","TAS"];
         # lGroups["Gender"] = ["female","male"];
         # lHierarchy['GroupOrder']= ["State" , "Gender"];
-        
+
         lGroups = self.mHierarchy['Groups']
         self.mLevels = list(lGroups.keys());
         self.mLabels2Tuples = {};
@@ -66,14 +64,11 @@ class cSignalGrouping (sighier.cSignalHierarchy):
                 self.mLabels2Tuples[lGroupLabel] = k;
                 self.mStructure[level][lGroupLabel] = set();
         # print("STRUCTURE_LEVEL" , level, self.mStructure[level]);
-        while(len(self.mStructure[level]) > 1):
+        while (len(self.mStructure[level]) > 1):
             self.add_level(level);
-            level = level + 1;
-        
+            level += 1;
+
         # Stabilize the order of nodes
         for level in  sorted(self.mStructure.keys()):
             for col in sorted(self.mStructure[level].keys()):
                 self.mStructure[level][col] = sorted(self.mStructure[level][col])
-                
-        # print("STRUCTURE", self.mStructure);
-        pass

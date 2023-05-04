@@ -27,8 +27,7 @@ class cTemporalHierarchy (sighier.cSignalHierarchy):
         # only for temporal hierarchies
         lPeriod = self.mPeriods[level]
         lPrefix = "TH"
-        lName = lPrefix + "_" + lPeriod + "_start"
-        return lName
+        return f"{lPrefix}_" + lPeriod + "_start"
     
     def get_beginning_of_period(self, x, iPeriod):
         # add this utility function.
@@ -37,7 +36,7 @@ class cTemporalHierarchy (sighier.cSignalHierarchy):
 
 
     def aggregate_time_columns(self, level, signal, iAllLevelsDataset):
-        cols = [col1 for col1 in sorted(self.mStructure[level][signal])]
+        cols = list(sorted(self.mStructure[level][signal]))
         iAllLevelsDataset[signal] = iAllLevelsDataset[cols[0]]
         for col in cols[1:]:
             # logical or
@@ -60,20 +59,20 @@ class cTemporalHierarchy (sighier.cSignalHierarchy):
         N = len(df.columns)
         df1 = df[[self.mDateColumn, self.mSignal]].copy()
         df1.set_index(self.mDateColumn, inplace=True, drop=False)
-        
+
         # df1.info()
         lPrefix = "TH"
         df_resampled = {}
         for lPeriod in self.mPeriods:
-            lName = lPrefix + "_" + lPeriod + "_start"
+            lName = f"{lPrefix}_" + lPeriod + "_start"
             df_resampled[lPeriod] = df1[self.mSignal].resample(lPeriod).sum().reset_index()
             df_resampled[lPeriod].columns = [lName , self.mSignal]
             # synchronize
-            lShift = df_resampled[lPeriod][lName].iloc[0] - df[self.mDateColumn].iloc[0] 
+            lShift = df_resampled[lPeriod][lName].iloc[0] - df[self.mDateColumn].iloc[0]
             df_resampled[lPeriod][lName] = df_resampled[lPeriod][lName] - lShift
-            
+
         for lPeriod in self.mPeriods:
-            lName = lPrefix + "_" + lPeriod + "_start"
+            lName = f"{lPrefix}_" + lPeriod + "_start"
             WData = df_resampled[lPeriod]
             # df[[self.mDateColumn , self.mSignal]].info()
             # WData.info()
@@ -81,8 +80,10 @@ class cTemporalHierarchy (sighier.cSignalHierarchy):
             df_merge = df[[self.mDateColumn , self.mSignal]].merge(WData, left_on=self.mDateColumn,right_on=lName, how='left', suffixes=('_x', '_Period'), sort=True)
             df[self.mSignal + '_' + lPeriod] = df_merge[self.mSignal + '_Period']
             df[lName] = df_merge[lName]
-            logger.info("FORECASTING_HIERARCHICAL_TEMPORAL_LEVEL " + str((lPeriod, lName, list(df.columns), WData.shape)))
-            
+            logger.info(
+                f"FORECASTING_HIERARCHICAL_TEMPORAL_LEVEL {(lPeriod, lName, list(df.columns), WData.shape)}"
+            )
+                    
 
         return df
 
@@ -92,18 +93,18 @@ class cTemporalHierarchy (sighier.cSignalHierarchy):
         N = len(df.columns)
         df1 = df[[self.mDateColumn, self.mSignal]].copy()
         df1.set_index(self.mDateColumn, inplace=True, drop=False)
-        
+
         # df1.info()
         lPrefix = "TH"
         lHelper = dtfunc.cDateTime_Helper()
         lBaseFreq = lHelper.computeTimeFrequency_in_seconds(df1[self.mDateColumn])
         df_resampled = {}
         for lPeriod in self.mPeriods:
-            lName = lPrefix + "_" + lPeriod + "_start"
+            lName = f"{lPrefix}_" + lPeriod + "_start"
             df_resampled[lPeriod] = df1[self.mSignal].resample(lPeriod).sum().reset_index()
             df_resampled[lPeriod].columns = [lName , self.mSignal]
             # synchronize
-            lShift = df_resampled[lPeriod][lName].iloc[0] - df[self.mDateColumn].iloc[0] 
+            lShift = df_resampled[lPeriod][lName].iloc[0] - df[self.mDateColumn].iloc[0]
             df_resampled[lPeriod][lName] = df_resampled[lPeriod][lName] - lShift
             lDate_Period = df_resampled[lPeriod][lName]
             # print("AS_FREQ" , lPeriod , lDate_Period.head())
@@ -112,34 +113,45 @@ class cTemporalHierarchy (sighier.cSignalHierarchy):
             lHorizon = max(1, lHorizon)
             # print("AS_FREQ_2" , lPeriod , lBaseFreq , lNewFreq , lHorizon)
             self.mHorizons[lPeriod] = lHorizon
-            logger.info("FORECASTING_HIERARCHICAL_TEMPORAL_HORIZONS_FIRST_RESAMPLED_DATA " + str(lPeriod) + " " + str(df_resampled[lPeriod].head(5).to_dict()) )
+            logger.info(
+                f"FORECASTING_HIERARCHICAL_TEMPORAL_HORIZONS_FIRST_RESAMPLED_DATA {str(lPeriod)} {str(df_resampled[lPeriod].head(5).to_dict())}"
+            )
 
-        logger.info("FORECASTING_HIERARCHICAL_TEMPORAL_HORIZONS " + str(self.mHorizons));
+        logger.info(
+            f"FORECASTING_HIERARCHICAL_TEMPORAL_HORIZONS {str(self.mHorizons)}"
+        );
 
     def checkPhysicalTime(self):
         logger = tsutil.get_pyaf_hierarchical_logger();
         lHelper = dtfunc.cDateTime_Helper()
         lIsPhysical = lHelper.isPhysicalTime(self.mTrainingDataset[self.mDateColumn])
-        if(not lIsPhysical):
-            raise tsutil.PyAF_Error('TIME_HIERARCHY_PHYSICAL_TIME_NEEDED ' + str(self.mDateColumn)  + " " + str(self.mTrainingDataset[self.mDateColumn].dtype))
+        if (not lIsPhysical):
+            raise tsutil.PyAF_Error(
+                f'TIME_HIERARCHY_PHYSICAL_TIME_NEEDED {str(self.mDateColumn)} {str(self.mTrainingDataset[self.mDateColumn].dtype)}'
+            )
         
     def check_increasing_periods(self):
         logger = tsutil.get_pyaf_hierarchical_logger();
         lHelper = dtfunc.cDateTime_Helper()
-        lSeconds = {}
-        for lPeriod in self.mPeriods:
-            lSeconds[lPeriod] = lHelper.get_period_length_in_seconds(lPeriod)
-        logger.info("FORECASTING_HIERARCHICAL_TEMPORAL_FREQUENCIES " + str(lSeconds) )
+        lSeconds = {
+            lPeriod: lHelper.get_period_length_in_seconds(lPeriod)
+            for lPeriod in self.mPeriods
+        }
+        logger.info(f"FORECASTING_HIERARCHICAL_TEMPORAL_FREQUENCIES {lSeconds}")
         lPreviousPeriod = lSeconds[ self.mPeriods[0] ]
-        
+
         lTimeFreqInSeconds = lHelper.computeTimeFrequency_in_seconds(self.mTrainingDataset[self.mDateColumn])
-        if(lTimeFreqInSeconds > lPreviousPeriod):
-            raise tsutil.PyAF_Error('TIME_HIERARCHY_PHYSICAL_TIME_RESOLUTION_TOO_LOW_FOR_THIS_PERIOD ' + str(self.mDateColumn)  + " " + str(lTimeFreqInSeconds) +
-                                    " " + self.mPeriods[0] + " " +  str(lPreviousPeriod))
-        
+        if (lTimeFreqInSeconds > lPreviousPeriod):
+            raise tsutil.PyAF_Error(
+                f'TIME_HIERARCHY_PHYSICAL_TIME_RESOLUTION_TOO_LOW_FOR_THIS_PERIOD {str(self.mDateColumn)} {str(lTimeFreqInSeconds)} '
+                + self.mPeriods[0]
+                + " "
+                + str(lPreviousPeriod)
+            )
+
         for lPeriod in self.mPeriods[1:]:
-            if(lSeconds[lPeriod] < lPreviousPeriod):
-                raise tsutil.PyAF_Error('TIME_HIERARCHY_NOT_MONOTONOUS ' + str(self.mPeriods));
+            if (lSeconds[lPeriod] < lPreviousPeriod):
+                raise tsutil.PyAF_Error(f'TIME_HIERARCHY_NOT_MONOTONOUS {str(self.mPeriods)}');
             lPreviousPeriod = lSeconds[lPeriod]
         
     def create_HierarchicalStructure(self):
@@ -149,14 +161,10 @@ class cTemporalHierarchy (sighier.cSignalHierarchy):
         self.compute_horizons(self.mTrainingDataset)
         # self.add_temporal_data(self.mTrainingDataset)
         self.mLevels = list(range(len(self.mPeriods)));
-        self.mStructure = {};
-        for (lLevel, lPeriod) in enumerate(self.mPeriods):
-            self.mStructure[lLevel] = {}
-            
-        for (lLevel, lPeriod) in enumerate(self.mPeriods):
+        self.mStructure = {lLevel: {} for lLevel, lPeriod in enumerate(self.mPeriods)}
+        for lLevel, lPeriod in enumerate(self.mPeriods):
             self.mStructure[lLevel][self.mSignal + '_' + lPeriod] = set()
-            if(lLevel > 0):
-                self.mStructure[lLevel][self.mSignal + '_' + lPeriod] = set([self.mSignal + '_' + self.mPeriods[lLevel - 1]])
-                
-        # print(self.mStructure);
-        pass
+            if (lLevel > 0):
+                self.mStructure[lLevel][self.mSignal + '_' + lPeriod] = {
+                    self.mSignal + '_' + self.mPeriods[lLevel - 1]
+                }

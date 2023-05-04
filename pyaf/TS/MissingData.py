@@ -81,7 +81,7 @@ class cMissingDataImputer:
     def interpolate_time_if_needed(self, iInputDS , iTime):
         
         type1 = iInputDS[iTime].dtype
-        if(type1.kind == 'M'):
+        if (type1.kind == 'M'):
             lMin = iInputDS[iTime].min()
             lDiffs = iInputDS[iTime] - lMin
             lDiffs = lDiffs.apply(lambda x : x.total_seconds())
@@ -90,13 +90,12 @@ class cMissingDataImputer:
             # print("TIME_DIFFS" , lDiffs.describe())
             lTime = lDiffs.interpolate(method='linear', limit_direction='both', axis=0)
             lTime = lTime.apply(lambda x : lMin + datetime.timedelta(seconds=x))
-            # print("TIME2" , lTime.describe())
-            lTime = lTime.astype(type1)
-            return lTime
         else:
             lTime = iInputDS[iTime].interpolate(method='linear', limit_direction='both', axis=0)
-            lTime = lTime.astype(type1)
-            return lTime
+
+        # print("TIME2" , lTime.describe())
+        lTime = lTime.astype(type1)
+        return lTime
             
     def interpolate_signal_if_needed(self, iInputDS , iSignal):
         lSignal = iInputDS[iSignal].interpolate(method='linear', limit_direction='both', axis=0)

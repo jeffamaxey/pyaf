@@ -5,11 +5,10 @@ def test_heroku_pyaf(data):
     url = PYAF_URL
     header = {"Content-Type":"application/json"}
 
-    import httplib2 
+    import httplib2
     http = httplib2.Http()
     response, send = http.request(url, "POST", headers=header, body=data)
-    content = response.read()
-    return content;
+    return response.read()
 
 
 def test_heroku_pyaf_2(data):
@@ -21,8 +20,7 @@ def test_heroku_pyaf_2(data):
                      headers={'Content-Type': 'application/json'},
                      body=json.dumps(data))
 
-    content = r.data
-    return content;
+    return r.data
 
 CSV="https://raw.githubusercontent.com/antoinecarme/TimeSeriesData/master/ozone-la.csv"
 data={"Name":"model1", "CSVFile":CSV, "DateFormat":"%Y-%m"}

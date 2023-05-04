@@ -35,13 +35,13 @@ class cTimeSeriesModel:
     def signal_info(self):
         lSignal = self.mTrend.mSignalFrame[self.mOriginalSignal];
         lStr1 = "SignalVariable='" + self.mOriginalSignal +"'";
-        lStr1 += " Length=" + str(lSignal.shape[0]) + " ";
-        lStr1 += " Min=" + str(np.min(lSignal)) + " Max="  + str(np.max(lSignal)) + " ";
-        lStr1 += " Mean=" + str(np.mean(lSignal)) + " StdDev="  + str(np.std(lSignal));
+        lStr1 += f" Length={str(lSignal.shape[0])} ";
+        lStr1 += f" Min={str(np.min(lSignal))} Max={str(np.max(lSignal))} ";
+        lStr1 += f" Mean={str(np.mean(lSignal))} StdDev={str(np.std(lSignal))}";
         lSignal = self.mTrend.mSignalFrame[self.mSignal];
         lStr2 = "TransformedSignalVariable='" + self.mSignal +"'";
-        lStr2 += " Min=" + str(np.min(lSignal)) + " Max="  + str(np.max(lSignal)) + " ";
-        lStr2 += " Mean=" + str(np.mean(lSignal)) + " StdDev="  + str(np.std(lSignal));
+        lStr2 += f" Min={str(np.min(lSignal))} Max={str(np.max(lSignal))} ";
+        lStr2 += f" Mean={str(np.mean(lSignal))} StdDev={str(np.std(lSignal))}";
         return (lStr1 , lStr2);
 
     def get_model_category(self):
@@ -59,8 +59,7 @@ class cTimeSeriesModel:
             "TSR" : 2,
         }
         lComplexity = self.mTransformation.mComplexity +  self.mTrend.mComplexity + self.mCycle.mComplexity + self.mAR.mComplexity;
-        lComplexity = lComplexity + lModelTypeComplexity.get(self.mDecompositionType, 0.0)
-        return lComplexity;     
+        return lComplexity + lModelTypeComplexity.get(self.mDecompositionType, 0.0)     
 
     def updateAllPerfs(self):
         lTimer = tsutil.cTimer(("UPDATE_BEST_MODEL_PERFS", {"Signal" : self.mOriginalSignal, "Model" : self.mOutName}))
@@ -75,7 +74,7 @@ class cTimeSeriesModel:
         self.mModelFrame = df.head(N);
         # print(self.mModelFrame.columns);
         lPrefix = self.mSignal + "_";
-        lForecastColumnName = str(self.mOriginalSignal) + "_Forecast";
+        lForecastColumnName = f"{str(self.mOriginalSignal)}_Forecast";
         lFitPerf = tsperf.cPerf();
         lForecastPerf = tsperf.cPerf();
         lTestPerf = tsperf.cPerf();
@@ -83,7 +82,7 @@ class cTimeSeriesModel:
         (lFrameFit, lFrameForecast, lFrameTest) = self.mTrend.mSplit.cutFrame(self.mModelFrame);
 
 
-        if(compute_all_indicators):
+        if compute_all_indicators:
             lFitPerf.compute(lFrameFit[self.mOriginalSignal] , lFrameFit[lForecastColumnName] ,
                              self.mOutName + '_Fit')
             lForecastPerf.compute(lFrameForecast[self.mOriginalSignal] ,
@@ -91,8 +90,7 @@ class cTimeSeriesModel:
                                   self.mOutName + '_Forecast')
             if(lFrameTest.shape[0] > 0):
                 lTestPerf.compute(lFrameTest[self.mOriginalSignal] , lFrameTest[lForecastColumnName],
-                                  self.mOutName + '_Test')            
-            pass
+                                  self.mOutName + '_Test')
         else:
             lFitPerf.computeCriterion(lFrameFit[self.mOriginalSignal] , lFrameFit[lForecastColumnName] ,
                                       self.mTimeInfo.mOptions.mModelSelection_Criterion,
@@ -104,7 +102,7 @@ class cTimeSeriesModel:
                 lTestPerf.computeCriterion(lFrameTest[self.mOriginalSignal] , lFrameTest[lForecastColumnName],
                                            self.mTimeInfo.mOptions.mModelSelection_Criterion,
                                            self.mOutName + '_Test')
-            
+
         self.mFitPerf = lFitPerf
         self.mForecastPerf = lForecastPerf;
         self.mTestPerf = lTestPerf;
@@ -132,23 +130,41 @@ class cTimeSeriesModel:
         sig_info = self.signal_info()
         logger.info("SIGNAL_DETAIL_ORIG " + sig_info[0]);
         logger.info("SIGNAL_DETAIL_TRANSFORMED " + sig_info[1]);
-        if(self.mAR.mExogenousInfo):
-            logger.info("EXOGENOUS_DATA " + str(self.mAR.mExogenousInfo.mExogenousVariables));        
+        if self.mAR.mExogenousInfo:
+            logger.info(
+                f"EXOGENOUS_DATA {str(self.mAR.mExogenousInfo.mExogenousVariables)}"
+            );
         logger.info("DECOMPOSITION_TYPE '" + self.mDecompositionType + "'");
         logger.info("BEST_TRANSOFORMATION_TYPE '" + self.mTransformation.get_name("") + "'");
         logger.info("BEST_DECOMPOSITION  '" + self.mOutName + "' [" + self.getFormula() + "]");
         logger.info("TREND_DETAIL '" + self.mTrend.mOutName + "' [" + self.mTrend.mFormula + "]");
         logger.info("CYCLE_DETAIL '"+ self.mCycle.mOutName + "' [" + self.mCycle.mFormula + "]");
         logger.info("AUTOREG_DETAIL '" + self.mAR.mOutName + "' [" + self.mAR.mFormula + "]");
-        logger.info("MODEL_MAPE MAPE_Fit=" + str(self.mFitPerf.mMAPE) + " MAPE_Forecast=" + str(self.mForecastPerf.mMAPE)  + " MAPE_Test=" + str(self.mTestPerf.mMAPE) );
-        logger.info("MODEL_SMAPE SMAPE_Fit=" + str(self.mFitPerf.mSMAPE) + " SMAPE_Forecast=" + str(self.mForecastPerf.mSMAPE)  + " SMAPE_Test=" + str(self.mTestPerf.mSMAPE) );
-        logger.info("MODEL_MASE MASE_Fit=" + str(self.mFitPerf.mMASE) + " MASE_Forecast=" + str(self.mForecastPerf.mMASE)  + " MASE_Test=" + str(self.mTestPerf.mMASE) );
-        logger.info("MODEL_CRPS CRPS_Fit=" + str(self.mFitPerf.mCRPS) + " CRPS_Forecast=" + str(self.mForecastPerf.mCRPS)  + " CRPS_Test=" + str(self.mTestPerf.mCRPS) );
-        logger.info("MODEL_L1 L1_Fit=" + str(self.mFitPerf.mL1) + " L1_Forecast=" + str(self.mForecastPerf.mL1)  + " L1_Test=" + str(self.mTestPerf.mL1) );
-        logger.info("MODEL_L2 L2_Fit=" + str(self.mFitPerf.mL2) + " L2_Forecast=" + str(self.mForecastPerf.mL2)  + " L2_Test=" + str(self.mTestPerf.mL2) );
-        logger.info("MODEL_LnQ LnQ_Fit=" + str(self.mFitPerf.mLnQ) + " LnQ_Forecast=" + str(self.mForecastPerf.mLnQ)  + " LnQ_Test=" + str(self.mTestPerf.mLnQ) );
-        logger.info("MODEL_MEDIAN_AE MedAE_Fit=" + str(self.mFitPerf.mMedAE) + " MedAE_Forecast=" + str(self.mForecastPerf.mMedAE)  + " MedAE_Test=" + str(self.mTestPerf.mMedAE) );
-        logger.info("MODEL_COMPLEXITY " + str(self.getComplexity()) );
+        logger.info(
+            f"MODEL_MAPE MAPE_Fit={str(self.mFitPerf.mMAPE)} MAPE_Forecast={str(self.mForecastPerf.mMAPE)} MAPE_Test={str(self.mTestPerf.mMAPE)}"
+        );
+        logger.info(
+            f"MODEL_SMAPE SMAPE_Fit={str(self.mFitPerf.mSMAPE)} SMAPE_Forecast={str(self.mForecastPerf.mSMAPE)} SMAPE_Test={str(self.mTestPerf.mSMAPE)}"
+        );
+        logger.info(
+            f"MODEL_MASE MASE_Fit={str(self.mFitPerf.mMASE)} MASE_Forecast={str(self.mForecastPerf.mMASE)} MASE_Test={str(self.mTestPerf.mMASE)}"
+        );
+        logger.info(
+            f"MODEL_CRPS CRPS_Fit={str(self.mFitPerf.mCRPS)} CRPS_Forecast={str(self.mForecastPerf.mCRPS)} CRPS_Test={str(self.mTestPerf.mCRPS)}"
+        );
+        logger.info(
+            f"MODEL_L1 L1_Fit={str(self.mFitPerf.mL1)} L1_Forecast={str(self.mForecastPerf.mL1)} L1_Test={str(self.mTestPerf.mL1)}"
+        );
+        logger.info(
+            f"MODEL_L2 L2_Fit={str(self.mFitPerf.mL2)} L2_Forecast={str(self.mForecastPerf.mL2)} L2_Test={str(self.mTestPerf.mL2)}"
+        );
+        logger.info(
+            f"MODEL_LnQ LnQ_Fit={str(self.mFitPerf.mLnQ)} LnQ_Forecast={str(self.mForecastPerf.mLnQ)} LnQ_Test={str(self.mTestPerf.mLnQ)}"
+        );
+        logger.info(
+            f"MODEL_MEDIAN_AE MedAE_Fit={str(self.mFitPerf.mMedAE)} MedAE_Forecast={str(self.mForecastPerf.mMedAE)} MedAE_Test={str(self.mTestPerf.mMedAE)}"
+        );
+        logger.info(f"MODEL_COMPLEXITY {str(self.getComplexity())}");
         logger.info("SIGNAL_TRANSFORMATION_DETAIL_START");
         self.mTransformation.dump_values();
         logger.info("SIGNAL_TRANSFORMATION_DETAIL_END");
@@ -210,7 +226,7 @@ class cTimeSeriesModel:
             df2[lPrefix + 'AR'] =  lARColumn ;
             df2[lPrefix + 'AR_residue'] = df2[self.mAR.mOutName + '_residue'];
 
-        lPrefix2 = str(self.mOriginalSignal) + "_";
+        lPrefix2 = f"{str(self.mOriginalSignal)}_";
         # print("TimeSeriesModel_forecast_invert");
         df2[lPrefix + 'TransformedForecast'] = self.compute_model_forecast(lTrendColumn, lCycleColumn, lARColumn)
         df2[lPrefix2 + 'Forecast'] = self.mTransformation.invert(df2[lPrefix + 'TransformedForecast']);
@@ -226,7 +242,7 @@ class cTimeSeriesModel:
     def forecast(self , df , iHorizon):
         N0 = df.shape[0];
         df1 = self.forecastOneStepAhead(df, 1)
-        lForecastColumnName = str(self.mOriginalSignal) + "_Forecast";
+        lForecastColumnName = f"{str(self.mOriginalSignal)}_Forecast";
         for h in range(0 , iHorizon - 1):
             # print(df1.info());
             N = df1.shape[0];
@@ -240,11 +256,18 @@ class cTimeSeriesModel:
         assert((N0 + iHorizon) == df1.shape[0])
         N1 = df1.shape[0];
         lPrefix = self.mSignal + "_";
-        lFieldsToErase = [ self.mOriginalSignal, self.mSignal,
-                           self.mTrend.mOutName + '_residue', lPrefix + 'Trend_residue',
-                           self.mCycle.mOutName + '_residue', lPrefix + 'Cycle_residue',
-                           self.mAR.mOutName + '_residue',  lPrefix + 'AR_residue',
-                           lPrefix + 'TransformedResidue', str(self.mOriginalSignal) + '_Residue']
+        lFieldsToErase = [
+            self.mOriginalSignal,
+            self.mSignal,
+            self.mTrend.mOutName + '_residue',
+            lPrefix + 'Trend_residue',
+            self.mCycle.mOutName + '_residue',
+            lPrefix + 'Cycle_residue',
+            self.mAR.mOutName + '_residue',
+            lPrefix + 'AR_residue',
+            lPrefix + 'TransformedResidue',
+            f'{str(self.mOriginalSignal)}_Residue',
+        ]
         df1.loc[N1 -iHorizon : N1, lFieldsToErase] = np.nan
         # print(df.head())
         # print(df1.head())
@@ -257,8 +280,8 @@ class cTimeSeriesModel:
 
     def applyForecastRectifier(self, df):
         df1 = df;
-        if(self.mTimeInfo.mOptions.mForecastRectifier == "relu"):
-            lForecastColumnName = str(self.mOriginalSignal) + "_Forecast";
+        if (self.mTimeInfo.mOptions.mForecastRectifier == "relu"):
+            lForecastColumnName = f"{str(self.mOriginalSignal)}_Forecast";
             df1[lForecastColumnName] = df1[lForecastColumnName].apply(lambda x : max(x, 0))
         return df1
 
@@ -266,13 +289,13 @@ class cTimeSeriesModel:
         lSignalColumn = self.mOriginalSignal;
 
         N = iInputDS.shape[0];
-        lForecastColumn = str(lSignalColumn) + "_Forecast";
+        lForecastColumn = f"{str(lSignalColumn)}_Forecast";
         lLowerBoundName = lForecastColumn + '_Lower_Bound'
         lUpperBoundName = lForecastColumn + '_Upper_Bound';
-        iForecastFrame[lLowerBoundName] = np.nan; 
+        iForecastFrame[lLowerBoundName] = np.nan;
         iForecastFrame[lUpperBoundName] = np.nan; 
 
-        lConfidence = 1.96 ; # 0.95
+        lConfidence = 1.96
         # the prediction intervals are only computed for the training horizon
         lHorizon = min(iHorizon , self.mTimeInfo.mHorizon);
         lWidths = [lConfidence * self.mPredictionIntervalsEstimator.mForecastPerformances[lForecastColumn + "_" + str(h + 1)].mL2
@@ -290,7 +313,7 @@ class cTimeSeriesModel:
         lSignalColumn = self.mOriginalSignal;
 
         N = iInputDS.shape[0] ;
-        lForecastColumn = str(lSignalColumn) + "_Forecast";
+        lForecastColumn = f"{str(lSignalColumn)}_Forecast";
         lQuantileName = lForecastColumn + "_Quantile_"
 
         # the prediction intervals are only computed for the training horizon
@@ -298,7 +321,7 @@ class cTimeSeriesModel:
         lPerfs = [self.mPredictionIntervalsEstimator.mForecastPerformances[lForecastColumn + "_" + str(h + 1)]
                    for h in range(0 , self.mTimeInfo.mHorizon)]
         lForcastValues = iForecastFrame.loc[N:N+iHorizon, lForecastColumn]
-        
+
         lQuantiles = self.mPredictionIntervalsEstimator.mForecastPerformances[lForecastColumn + "_1"].mErrorQuantiles.keys()
         lQuantiles = sorted(lQuantiles)
         for q in lQuantiles:
@@ -317,11 +340,9 @@ class cTimeSeriesModel:
                            lPrefix + 'Forecast' , lPrefix + 'Residue', horizon = self.mTimeInfo.mHorizon);
 
     def to_dict(self, iWithOptions = False):
-        dict1 = {};
         d1 = { "Time" : self.mTimeInfo.to_dict(),
                "Signal" : self.mOriginalSignal,
                "Training_Signal_Length" : self.mModelFrame.shape[0]};
-        dict1["Dataset"] = d1;
         lTransformation = self.mTransformation.mFormula;
         d2 = { "Best_Decomposition" : self.mOutName,
                "Signal_Decomposition_Type" : self.mDecompositionType,
@@ -330,7 +351,7 @@ class cTimeSeriesModel:
                "Cycle" : self.mCycle.mFormula,
                "AR_Model" : self.mAR.mFormula,
                };
-        dict1["Model"] = d2;
+        dict1 = {"Dataset": d1, "Model": d2}
         d3 = {"MAPE" : self.mForecastPerf.mMAPE,
               "MASE" : self.mForecastPerf.mMASE,
               "CRPS" : self.mForecastPerf.mCRPS,
@@ -347,16 +368,15 @@ class cTimeSeriesModel:
 
     def getForecastDatasetForPlots(self):
         lInput = self.mTrend.mSignalFrame;
-        lOutput = self.forecast(lInput ,  self.mTimeInfo.mHorizon);
-        return lOutput
+        return self.forecast(lInput ,  self.mTimeInfo.mHorizon)
 
     def plotResidues(self, name = None, format = 'png', iOutputDF = None):
         df = iOutputDF
         if(df is None):
             df = self.getForecastDatasetForPlots();
-        lTime = self.mTimeInfo.mTime; # NormalizedTimeColumn;
+        lTime = self.mTimeInfo.mTime
         lPrefix = self.mSignal + "_";
-        lPrefix2 = str(self.mOriginalSignal) + "_";
+        lPrefix2 = f"{str(self.mOriginalSignal)}_";
         if(name is not None):
             tsplot.decomp_plot(df, lTime, self.mSignal, lPrefix + 'Trend' , lPrefix + 'Trend_residue', name = name + "_trend" , format=format, horizon = self.mTimeInfo.mHorizon);
             tsplot.decomp_plot(df, lTime, lPrefix + 'Trend_residue' , lPrefix + 'Cycle', lPrefix + 'Cycle_residue', name = name + "_cycle" , format=format, horizon = self.mTimeInfo.mHorizon);
@@ -374,9 +394,9 @@ class cTimeSeriesModel:
         lOutput =  self.getForecastDatasetForPlots();
         self.plotResidues(name = name, format=format, iOutputDF = lOutput);
         # print(lOutput.columns)
-        lPrefix = str(self.mOriginalSignal) + "_";
+        lPrefix = f"{str(self.mOriginalSignal)}_";
         lForecastColumn = lPrefix + 'Forecast';
-        lTime = self.mTimeInfo.mTime;            
+        lTime = self.mTimeInfo.mTime;
         lOutput.set_index(lTime, inplace=True, drop=False);
         # print(lOutput[lTime].dtype);
 
@@ -387,7 +407,7 @@ class cTimeSeriesModel:
                                         lForecastColumn + '_Upper_Bound',
                                         name = name,
                                         format= format, horizon = self.mTimeInfo.mHorizon);
-        
+
         if(self.mTimeInfo.mOptions.mAddPredictionIntervals):
             lQuantiles = self.mPredictionIntervalsEstimator.mForecastPerformances[lForecastColumn + "_1"].mErrorQuantiles.keys()
             lQuantiles = sorted(lQuantiles)
@@ -400,20 +420,29 @@ class cTimeSeriesModel:
         #lOutput.plot()
         
     def getPlotsAsDict(self):
-        lDict = {};
         df = self.getForecastDatasetForPlots();
         lTime = self.mTime;
         lSignalColumn = self.mOriginalSignal;
         lPrefix = self.mSignal + "_";
-        lPrefix2 = str(self.mOriginalSignal) + "_";
-        lDict["Trend"] = tsplot.decomp_plot_as_png_base64(df, lTime, self.mSignal, lPrefix + 'Trend' , lPrefix + 'Trend_residue', name = "trend", horizon = self.mTimeInfo.mHorizon);
+        lPrefix2 = f"{str(self.mOriginalSignal)}_";
+        lDict = {
+            "Trend": tsplot.decomp_plot_as_png_base64(
+                df,
+                lTime,
+                self.mSignal,
+                lPrefix + 'Trend',
+                lPrefix + 'Trend_residue',
+                name="trend",
+                horizon=self.mTimeInfo.mHorizon,
+            )
+        }
         lDict["Cycle"] = tsplot.decomp_plot_as_png_base64(df, lTime, lPrefix + 'Trend_residue' , lPrefix + 'Cycle', lPrefix + 'Cycle_residue', name = "cycle", horizon = self.mTimeInfo.mHorizon);
         lDict["AR"] = tsplot.decomp_plot_as_png_base64(df, lTime, lPrefix + 'Cycle_residue' , lPrefix + 'AR' , lPrefix + 'AR_residue', name = "AR", horizon = self.mTimeInfo.mHorizon);
         lDict["Forecast"] = tsplot.decomp_plot_as_png_base64(df, lTime, lSignalColumn, lPrefix2 + 'Forecast' , lPrefix2 + 'Residue', name = "forecast", horizon = self.mTimeInfo.mHorizon);
 
         lOutput = df;
         # print(lOutput.columns)
-        lPrefix = str(self.mOriginalSignal) + "_";
+        lPrefix = f"{str(self.mOriginalSignal)}_";
         lForecastColumn = lPrefix + 'Forecast';
         lTime = self.mTimeInfo.mTime;
         lOutput.set_index(lTime, inplace=True, drop=False);
@@ -433,16 +462,17 @@ class cTimeSeriesModel:
                                                                               lQuantiles,
                                                                               name = "Forecast_Quantiles",
                                                                               format= format, horizon = self.mTimeInfo.mHorizon);
-            
+
         return lDict;
 
 
     def getVersions(self):
         
         import os, platform, pyaf
-        lVersionDict = {};
-        lVersionDict["PyAF_version"] = pyaf.__version__;
-        lVersionDict["system_platform"] = platform.platform();
+        lVersionDict = {
+            "PyAF_version": pyaf.__version__,
+            "system_platform": platform.platform(),
+        };
         lVersionDict["system_uname"] = platform.uname();
         lVersionDict["system_processor"] = platform.processor();
         lVersionDict["python_implementation"] = platform.python_implementation();
@@ -453,10 +483,10 @@ class cTimeSeriesModel:
 
         import pandas as pd
         lVersionDict["pandas_version"] = pd.__version__;
-    
+
         import numpy as np
         lVersionDict["numpy_version"] = np.__version__;
-    
+
         import scipy as sc
         lVersionDict["scipy_version"] = sc.__version__;
 

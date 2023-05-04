@@ -4,38 +4,44 @@ import glob
 
 def add_makefile_entry(subdir1):
     test_target = "";
-    for filename in sorted(glob.glob("tests/" + subdir1 + "/*.py")):
+    for filename in sorted(glob.glob(f"tests/{subdir1}/*.py")):
         lShortName = os.path.basename(filename);
-        if(not lShortName.lower().startswith("gen_all") and
-           not lShortName.lower().startswith("gen_makefile") and
-           not "prototyp" in lShortName.lower() and
-           not "_slow_mode" in lShortName.lower()):
-            bn = subdir1 + "/" + lShortName;
+        if (
+            not lShortName.lower().startswith("gen_all")
+            and not lShortName.lower().startswith("gen_makefile")
+            and "prototyp" not in lShortName.lower()
+            and "_slow_mode" not in lShortName.lower()
+        ):
+            bn = f"{subdir1}/{lShortName}";
             logfile = bn.replace("/" , "_");
             logname = logfile.replace(".py" , ".log");
-            logfile = "logs/" + logname;
-            reflogfile = "tests/references/" + logname;
-            reflogfile2 = "tests/references/" + subdir1 + "/" + lShortName.replace(".py", ".log")
+            logfile = f"logs/{logname}";
+            reflogfile = f"tests/references/{logname}";
+            reflogfile2 = f"tests/references/{subdir1}/" + lShortName.replace(
+                ".py", ".log"
+            )
             # print("EXEC_THIS=1 mkdir -p " , "tests/references/" + subdir1 , "; git mv " , reflogfile, reflogfile2)
-            difffile = logfile + ".diff"
+            difffile = f"{logfile}.diff"
             # print("#PROCESSING FILE : " , filename, bn , logfile);
-        
+
             print(bn , " : " , "\n\t", "-$(PYTHON) " , filename , " > " , logfile, " 2>&1");
             print("\t", "$(PYTHON) scripts/num_diff.py " , reflogfile2 , logfile, " > " , difffile);
             print("\t", "tail -10 " ,  difffile, "\n");
-                
-            test_target = bn + " " + test_target;
+
+            test_target = f"{bn} {test_target}";
 
     return test_target;
 
 
-str1 = "artificial basic_checks bugs cross_validation croston exog expsmooth func HeartRateTimeSeries heroku hierarchical  HourOfWeek model_control perf svr transformations  neuralnet real-life  time_res perfs demos xgb xeon-phi-parallel sampling temporal_hierarchy WeekOfMonth missing_data ";
-str1 = str1 + " probabilistic_forecasting"
-str1 = str1 + " lgbm"
-str1 = str1 + " perf_MedAE"
-str1 = str1 + " perf_LnQ"
-str1 = str1 + " plots"
-str1 = str1 + " multiplicative_seasonal"
+str1 = (
+    "artificial basic_checks bugs cross_validation croston exog expsmooth func HeartRateTimeSeries heroku hierarchical  HourOfWeek model_control perf svr transformations  neuralnet real-life  time_res perfs demos xgb xeon-phi-parallel sampling temporal_hierarchy WeekOfMonth missing_data "
+    + " probabilistic_forecasting"
+)
+str1 += " lgbm"
+str1 += " perf_MedAE"
+str1 += " perf_LnQ"
+str1 += " plots"
+str1 += " multiplicative_seasonal"
 subdirs = str1.split();
 
 print("PYTHON=timeout 600 python3\n\n");

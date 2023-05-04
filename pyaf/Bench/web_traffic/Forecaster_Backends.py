@@ -47,17 +47,17 @@ class cAbstractBackend:
             df1 = df[['Date'] + cols]
             args = args + [(self , df1, cols, last_date, H)];
             cols = []
-            
+
 
         i = 1;
         forecasts = {}
         for res in pool.imap(run_bench_process, args):
             signals = res[0][2]
             for sig in signals:
-                logger.info("FINISHED_BENCH_FOR_SIGNAL " + str(sig)  + " " +  str(i) + "/" + str(len(df.columns)));
+                logger.info(f"FINISHED_BENCH_FOR_SIGNAL {str(sig)} {str(i)}/{len(df.columns)}");
                 forecasts[sig] = res[1][sig]
                 i = i + 1
-            
+
         pool.close()
         pool.join()
 
@@ -74,17 +74,14 @@ class cAbstractBackend:
 class cZero_Backend (cAbstractBackend):
     def __init__(self):
         cAbstractBackend.__init__(self);
-        pass
     
     def real_forecast_one_signal(self, df, signal, last_date, H):
-        fcst_dict = self.forecast_zero_for_column(df, signal, last_date, H)
-        return fcst_dict
+        return self.forecast_zero_for_column(df, signal, last_date, H)
 
         
 class cPyAF_Backend (cAbstractBackend):
     def __init__(self):
         cAbstractBackend.__init__(self);
-        pass
 
     
     def forecast_all_signals(self, project_data , last_date, H):
@@ -97,7 +94,7 @@ class cPyAF_Backend (cAbstractBackend):
         lEngine.mOptions.mParallelMode = False
         lEngine.mOptions.set_active_transformations(['None', 'Difference' , 'Anscombe'])
         lEngine.mOptions.mMaxAROrder = 16
-        
+
         # lEngine
         df1 = df[['Date' , signal]].fillna(0.0)
         lEngine.train(df1, 'Date' , signal, 1);
@@ -106,7 +103,7 @@ class cPyAF_Backend (cAbstractBackend):
 
         df_forecast = lEngine.forecast(iInputDS = df1, iHorizon = H)
         dates = df_forecast['Date'].tail(H).values
-        predictions = df_forecast[str(signal) + '_Forecast'].tail(H).values
+        predictions = df_forecast[f'{str(signal)}_Forecast'].tail(H).values
         # logger.info(dates)
         # logger.info(predictions)
         fcst_dict = {}
@@ -114,7 +111,7 @@ class cPyAF_Backend (cAbstractBackend):
             ts = pd.to_datetime(str(dates[i])) 
             date_str = ts.strftime('%Y-%m-%d')
             fcst_dict[date_str] = int(predictions[i])
-        logger.info("SIGNAL_FORECAST " +  str(signal) + " " +  str(fcst_dict))
+        logger.info(f"SIGNAL_FORECAST {str(signal)} {fcst_dict}")
         return fcst_dict
         
     
@@ -122,7 +119,6 @@ class cPyAF_Backend (cAbstractBackend):
 class cPyAF_Backend_2 (cPyAF_Backend):
     def __init__(self):
         cPyAF_Backend.__init__(self);
-        pass
 
     
     def forecast_all_signals(self, project_data , last_date, H):
@@ -140,12 +136,10 @@ class cPyAF_Backend_2 (cPyAF_Backend):
         lMinNonZero = 5
         last_100_values = sig[-100:]
         lNbNonZero = last_100_values[last_100_values > 0].count()
-        logger.info("SIGNAL_FILTER_INFO " + str([sig.name , sig.min() , sig.max() , sig.mean(), sig.std(), lNbNonZero]))
-        if(sig.max() < lMinVisits):
-            return False;
-        if(lNbNonZero < lMinNonZero):
-            return False
-        return True
+        logger.info(
+            f"SIGNAL_FILTER_INFO {[sig.name, sig.min(), sig.max(), sig.mean(), sig.std(), lNbNonZero]}"
+        )
+        return False if (sig.max() < lMinVisits) else lNbNonZero >= lMinNonZero
     
     
     def clean_all_signals(self , df):
@@ -153,9 +147,8 @@ class cPyAF_Backend_2 (cPyAF_Backend):
         df.info()
         df_out['Date'] = df['Date']
         for col in df.columns:
-            if(col != 'Date'):
-                if(self.is_significant_signal(df[col])):
-                    df_out[col] = df[col]
+            if (col != 'Date') and (self.is_significant_signal(df[col])):
+                df_out[col] = df[col]
         df_out.info()
         return df_out
     
@@ -166,7 +159,6 @@ class cPyAF_Hierarchical_Backend (cAbstractBackend):
         cAbstractBackend.__init__(self);
         self.mOtherArticleId = -1
         self.mMaxNbKept = 100
-        pass
 
     
     def forecast_all_signals(self, project_data , last_date, H):
@@ -178,10 +170,10 @@ class cPyAF_Hierarchical_Backend (cAbstractBackend):
         for article_id in articles:
             sums[article_id] = project_data.mVisitsDF[article_id].fillna(0.0).sum()
             total_sum = total_sum + sums[article_id]
-        logger.info("SUMS_BEFORE_SORTING " + str((list(sums)[0:self.mMaxNbKept] , total_sum)))
+        logger.info(f"SUMS_BEFORE_SORTING {(list(sums)[:self.mMaxNbKept], total_sum)}")
         # order by total count
         sorted_sums = sorted(sums.items(), key=lambda x: x[1], reverse=True)
-        logger.info("SUMS_AFTER_SORTING " + str(sorted_sums[:self.mMaxNbKept]))
+        logger.info(f"SUMS_AFTER_SORTING {str(sorted_sums[:self.mMaxNbKept])}")
         result = []
         cum_sum = 0;
         threshold = 0.95 * total_sum
@@ -189,7 +181,9 @@ class cPyAF_Hierarchical_Backend (cAbstractBackend):
             if(cum_sum <= threshold):
                 result.append(article_id)
             cum_sum = cum_sum + sums[article_id]
-        logger.info("SUMS_AFTER_SORTING_2 " + str((threshold, cum_sum , cum_sum / total_sum, len(articles), len(result))))
+        logger.info(
+            f"SUMS_AFTER_SORTING_2 {(threshold, cum_sum, cum_sum / total_sum, len(articles), len(result))}"
+        )
         return result
         
 
@@ -207,7 +201,6 @@ class cPyAF_Hierarchical_Backend (cAbstractBackend):
             important_articles = self.reduce_articles(project_data , articles)
             self.clean_base_level[acc_ag_key] = important_articles
             self.nb_discarded[acc_ag_key] = len(articles) - len(important_articles)
-        pass
     
     def define_hierarchy(self, project_data):
         self.analyze_signals(project_data)
@@ -231,15 +224,15 @@ class cPyAF_Hierarchical_Backend (cAbstractBackend):
             else:
                 self.mHierarchyVisits[article_id_2] = series
                 hier_row = [article_id_2, access+ '+' + agent , agent, project_data.mName]
-                
+
             rows_list.append(hier_row)
 
         lLevels = ['article', 'agent_access' , 'agent' , 'project'];
-        lHierarchy = {};
-        lHierarchy['Levels'] = lLevels;
-        lHierarchy['Data'] = pd.DataFrame(rows_list, columns =  lLevels);
-        lHierarchy['Type'] = "Hierarchical";
-    
+        lHierarchy = {
+            'Levels': lLevels,
+            'Data': pd.DataFrame(rows_list, columns=lLevels),
+            'Type': "Hierarchical",
+        };
         logger.info(str(lHierarchy['Data'].head(lHierarchy['Data'].shape[0])));
         logger.info(str(lHierarchy['Data'].info()));
         logger.info(str(self.mHierarchyVisits.info()));
@@ -259,7 +252,7 @@ class cPyAF_Hierarchical_Backend (cAbstractBackend):
         lEngine.mOptions.mMaxAROrder = 16
 
         lHierarchy = self.define_hierarchy(project_data)
-        
+
         # lEngine
         df1 = self.mHierarchyVisits.fillna(0.0)
         lEngine.train(df1, 'Date' , None, 1 , lHierarchy, None);
@@ -272,16 +265,19 @@ class cPyAF_Hierarchical_Backend (cAbstractBackend):
         dates = df_forecast['Date'].tail(H).values
         forecasts = {}
         for col in project_data.mVisitsDF.columns:
-            if(col != 'Date'):
-                logger.info("FORECAST_SIGNAL "  +  str([self.__class__.__name__ , col]))
+            if (col != 'Date'):
+                logger.info(f"FORECAST_SIGNAL {[self.__class__.__name__, col]}")
                 predictions = None
-                if(col in self.mHierarchyVisits.columns):
-                    predictions = df_forecast[str(col) + '_AHP_TD_Forecast'].tail(H).values
+                if (col in self.mHierarchyVisits.columns):
+                    predictions = df_forecast[f'{str(col)}_AHP_TD_Forecast'].tail(H).values
                 else:
                     nb_other = self.nb_discarded[self.mHierarchyClass[col]]
-                    predictions = df_forecast[str(self.mOtherArticleId) + '_AHP_TD_Forecast'] / nb_other
+                    predictions = (
+                        df_forecast[f'{str(self.mOtherArticleId)}_AHP_TD_Forecast']
+                        / nb_other
+                    )
                     predictions = predictions.tail(H).values
-                    
+
                 # logger.info(dates)
                 # logger.info(predictions)
                 fcst_dict = {}
@@ -289,7 +285,7 @@ class cPyAF_Hierarchical_Backend (cAbstractBackend):
                     ts = pd.to_datetime(str(dates[i])) 
                     date_str = ts.strftime('%Y-%m-%d')
                     fcst_dict[date_str] = int(predictions[i])
-                logger.info("SIGNAL_FORECAST "  + str([col, fcst_dict]))
+                logger.info(f"SIGNAL_FORECAST {[col, fcst_dict]}")
                 forecasts[col] = fcst_dict
-        
+
         return forecasts

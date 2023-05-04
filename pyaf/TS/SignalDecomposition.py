@@ -223,15 +223,14 @@ class cTraining_Arg:
 class cModelSelector_OneSignal:
     def __init__(self):
         self.mOptions = None
-        pass
 
-    def collectPerformanceIndices_ModelSelection(self, iSignal, iSigDecs) :
+    def collectPerformanceIndices_ModelSelection(self, iSignal, iSigDecs):
         logger = tsutil.get_pyaf_logger();
         lTimer = tsutil.cTimer(("MODEL_SELECTION", {"Signal" : iSignal, "Transformations" : sorted(list(iSigDecs.keys()))}))
-        rows_list = []
         lPerfsByModel = {}
-        for (lName, sigdec) in iSigDecs.items():
-            for (model , value) in sorted(sigdec.mPerfsByModel.items()):
+        rows_list = []
+        for lName, sigdec in iSigDecs.items():
+            for model, value in sorted(sigdec.mPerfsByModel.items()):
                 lPerfsByModel[model] = value
                 lTranformName = sigdec.mSignal;
                 lDecompType = model[1];
@@ -248,17 +247,17 @@ class cModelSelector_OneSignal:
                        lForecastPerf.getCriterionValue(self.mOptions.mModelSelection_Criterion),
                        lTestPerf.getCriterionValue(self.mOptions.mModelSelection_Criterion)]
                 rows_list.append(row);
-                if(self.mOptions.mDebugPerformance):
-                    logger.info("collectPerformanceIndices : " +
-                                str((self.mOptions.mModelSelection_Criterion,
-                                     lModelFormula, lComplexity, round(row[7], 4))))
+                if self.mOptions.mDebugPerformance:
+                    logger.info(
+                        f"collectPerformanceIndices : {(self.mOptions.mModelSelection_Criterion, lModelFormula, lComplexity, round(row[7], 4))}"
+                    )
 
         self.mTrPerfDetails =  pd.DataFrame(rows_list, columns=
                                             ('Split', 'Transformation', 'DecompositionType',
                                              'Model', 'DetailedFormula', 'Category', 'Complexity',
                                              'Fit' + self.mOptions.mModelSelection_Criterion,
                                              'Forecast' + self.mOptions.mModelSelection_Criterion,
-                                             'Test' + self.mOptions.mModelSelection_Criterion)) 
+                                             'Test' + self.mOptions.mModelSelection_Criterion))
         # print(self.mTrPerfDetails.head(self.mTrPerfDetails.shape[0]));
         lIndicator = 'Forecast' + self.mOptions.mModelSelection_Criterion;
         lBestPerf = self.mTrPerfDetails[ lIndicator ].min();
@@ -268,7 +267,7 @@ class cModelSelector_OneSignal:
                                         ascending=[True, True, True],
                                         inplace=True);
         self.mTrPerfDetails = self.mTrPerfDetails.reset_index(drop=True);
-                
+
         lInterestingModels = self.mTrPerfDetails[self.mTrPerfDetails[lIndicator] <= (lBestPerf + 0.01)].reset_index(drop=True);
         lInterestingModels.sort_values(by=['Complexity'] , ascending=True, inplace=True)
         # print(self.mTransformList);
@@ -279,19 +278,19 @@ class cModelSelector_OneSignal:
         # print("BEST_MODEL", lBestName, lBestModel)
         self.mBestModel = lBestModel
         self.mPerfsByModel = lPerfsByModel
-        self.mModelShortList = lInterestingModels[['Transformation', 'DecompositionType', 'Model', lIndicator, 'Complexity']] 
+        self.mModelShortList = lInterestingModels[['Transformation', 'DecompositionType', 'Model', lIndicator, 'Complexity']]
         return (iSignal, lPerfsByModel, lBestModel, self.mModelShortList)
 
-    def collectPerformanceIndices(self, iSignal, iSigDecs) :
+    def collectPerformanceIndices(self, iSignal, iSigDecs):
         logger = tsutil.get_pyaf_logger();
         lTimer = None
         if(self.mOptions.mDebugProfile):
             lTimer = tsutil.cTimer(("MODEL_SELECTION", {"Signal" : iSignal}))
 
-        rows_list = []
         lPerfsByModel = {}
-        for (lName, sigdec) in iSigDecs.items():
-            for (model , value) in sorted(sigdec.mPerfsByModel.items()):
+        rows_list = []
+        for lName, sigdec in iSigDecs.items():
+            for model, value in sorted(sigdec.mPerfsByModel.items()):
                 lPerfsByModel[model] = value;
                 lTranformName = sigdec.mSignal;
                 lDecompType = model[1];
@@ -308,18 +307,18 @@ class cModelSelector_OneSignal:
                        lForecastPerf.mCount, lForecastPerf.mL1, lForecastPerf.mL2, lForecastPerf.mMAPE, lForecastPerf.mMASE, lForecastPerf.mCRPS,
                        lTestPerf.mCount, lTestPerf.mL1, lTestPerf.mL2, lTestPerf.mMAPE, lTestPerf.mMASE, lTestPerf.mCRPS]
                 rows_list.append(row);
-                if(self.mOptions.mDebugPerformance):
+                if self.mOptions.mDebugPerformance:
                     lIndicatorValue = lForecastPerf.getCriterionValue(self.mOptions.mModelSelection_Criterion)
-                    logger.info("collectPerformanceIndices : " +
-                                str((self.mOptions.mModelSelection_Criterion, lModelFormula, lModelCategory,
-                                     lComplexity, round(lIndicatorValue, 4))))
+                    logger.info(
+                        f"collectPerformanceIndices : {(self.mOptions.mModelSelection_Criterion, lModelFormula, lModelCategory, lComplexity, round(lIndicatorValue, 4))}"
+                    )
 
         self.mTrPerfDetails =  pd.DataFrame(rows_list, columns=
                                             ('Split', 'Transformation', 'DecompositionType', 'Model',
                                              'DetailedFormula', 'Category', 'Complexity',
                                              'FitCount', 'FitL1', 'FitL2', 'FitMAPE', 'FitMASE', 'FitCRPS',
                                              'ForecastCount', 'ForecastL1', 'ForecastL2', 'ForecastMAPE', 'ForecastMASE', 'ForecastCRPS',
-                                             'TestCount', 'TestL1', 'TestL2', 'TestMAPE', 'TestMASE', 'TestCRPS')) 
+                                             'TestCount', 'TestL1', 'TestL2', 'TestMAPE', 'TestMASE', 'TestCRPS'))
         # print(self.mTrPerfDetails.head(self.mTrPerfDetails.shape[0]));
         lIndicator = 'Forecast' + self.mOptions.mModelSelection_Criterion;
         lBestPerf = self.mTrPerfDetails[ lIndicator ].min();
@@ -329,7 +328,7 @@ class cModelSelector_OneSignal:
                                         ascending=[True, True, True],
                                         inplace=True);
         self.mTrPerfDetails = self.mTrPerfDetails.reset_index(drop=True);
-                
+
         lInterestingModels = self.mTrPerfDetails[self.mTrPerfDetails[lIndicator] <= (lBestPerf + 0.01)].reset_index(drop=True);
         lInterestingModels.sort_values(by=['Complexity'] , ascending=True, inplace=True)
         # print(self.mTransformList);
@@ -338,7 +337,7 @@ class cModelSelector_OneSignal:
         lBestModel = lPerfsByModel[lBestName][0][2];
         self.mBestModel = lBestModel
         self.mPerfsByModel = lPerfsByModel
-        self.mModelShortList = lInterestingModels[['Transformation', 'DecompositionType', 'Model', lIndicator, 'Complexity']] 
+        self.mModelShortList = lInterestingModels[['Transformation', 'DecompositionType', 'Model', lIndicator, 'Complexity']]
         return (iSignal, lPerfsByModel, lBestModel, self.mModelShortList)
 
 
@@ -401,7 +400,6 @@ class cSignalDecompositionTrainer:
         self.mOptions = tsopts.cSignalDecomposition_Options();
         self.mExogenousData = None;
         self.mTransformList = {}
-        pass
 
     def define_splits(self):
         lSplits = [None]
@@ -547,27 +545,25 @@ class cSignalDecompositionForecaster:
         if(iFullFrame is None):
             return iOneSignalFrame
         lTime = iFullFrame.columns[0]
-        lForecastFrame = iFullFrame.merge(iOneSignalFrame, how='left', left_on=lTime, right_on=iTime);
-        return lForecastFrame
+        return iFullFrame.merge(
+            iOneSignalFrame, how='left', left_on=lTime, right_on=iTime
+        )
     
     def forecast(self, iDecomsposition, iInputDS, iHorizons):
-        lHorizons = {}
-        for sig in iDecomsposition.mSignals:
-            if(dict == type(iHorizons)):
-                lHorizons[sig] = iHorizons[sig]
-            else:
-                lHorizons[sig] = int(iHorizons)
-        
+        lHorizons = {
+            sig: iHorizons[sig] if (dict == type(iHorizons)) else int(iHorizons)
+            for sig in iDecomsposition.mSignals
+        }
         lForecastFrame = None
         args = [];
         for lSignal in iDecomsposition.mSignals:
             args = args + [(lSignal, iDecomsposition, iInputDS, lHorizons[lSignal])]
 
-        NCores = min(len(args) , iDecomsposition.mOptions.mNbCores) 
+        NCores = min(len(args) , iDecomsposition.mOptions.mNbCores)
         if(iDecomsposition.mOptions.mParallelMode and  NCores > 1):
             from multiprocessing import Pool
             pool = Pool(NCores)
-        
+
             for res in pool.imap(forecast_one_signal, args):
                 (lSignal, lTime, lForecastFrame_i) = res
                 # print((lSignal, lTime, lForecastFrame_i.columns))
@@ -581,7 +577,7 @@ class cSignalDecompositionForecaster:
                 (lSignal, lTime, lForecastFrame_i) = res
                 lForecastFrame = self.merge_frames(lForecastFrame, lForecastFrame_i, lTime)
                 del lForecastFrame_i
-                
+
         return lForecastFrame;
         
 class cSignalDecomposition:
@@ -590,7 +586,6 @@ class cSignalDecomposition:
         self.mSigDecBySplitAndTransform = {};
         self.mOptions = tsopts.cSignalDecomposition_Options();
         self.mExogenousData = None;
-        pass
 
     def checkData(self, iInputDS, iTime, iSignal, iHorizon, iExogenousData):        
         if(iHorizon != int(iHorizon)):

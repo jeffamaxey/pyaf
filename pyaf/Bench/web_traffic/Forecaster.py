@@ -30,29 +30,27 @@ class cProjectForecaster:
         
     def load_data(self, project):
         logger.info("LOADING_PROJECT_TRAINING_DATA_START " + project)
-        pkl_file = open(self.mDataDirectory + "/" + project + ".pkl", 'rb')
-        lProjectData = pickle.load(pkl_file)
-        pkl_file.close()
+        with open(self.mDataDirectory + "/" + project + ".pkl", 'rb') as pkl_file:
+            lProjectData = pickle.load(pkl_file)
         lProjectData.dump()
         logger.info("LOADING_PROJECT_TRAINING_DATA_END " + project)
         return lProjectData                
         
     def read_keys_file_if_needed(self):
-        if(self.mShortednedIds is None):
+        if (self.mShortednedIds is None):
             logger.info("LOADING_SHORTENED_IDS_START")
             self.mKeysDF = pd.read_csv(self.mDataDirectory + "/" + self.mKeysFileName)
             # self.mKeysDF[['Id']].to_csv('tmp/ids.txt' , index=False)
             self.mShortednedIds = {}
             for row in self.mKeysDF.itertuples():
                 self.mShortednedIds[row[1]] = row[2]
-            logger.info("LOADING_SHORTENED_IDS_END " + str(len(self.mShortednedIds)))
-            pass
+            logger.info(f"LOADING_SHORTENED_IDS_END {len(self.mShortednedIds)}")
 
     def get_shortened_id(self, article_full_name, date):
         lKey = article_full_name + "_" + str(date)
         lShort = self.mShortednedIds.get(lKey)
-        if(lShort is None):
-            logger.info("SHORT_ID_NOT_FOUND " + str(article_full_name)  + " " + str(date) + " " +  lKey)
+        if (lShort is None):
+            logger.info(f"SHORT_ID_NOT_FOUND {str(article_full_name)} {str(date)} " + lKey)
         assert(lShort is not None)
         return lShort
 
@@ -84,7 +82,7 @@ class cProjectForecaster:
 
     def save_submission(self, outputs, project):        
         lFilename = datetime.datetime.now().strftime("%Y_%m_%d")
-        lFilename = "tmp/submit_" + str(project) + "_" + str(self.mBackendName) + "_" + lFilename + ".csv.gz"
+        lFilename = f"tmp/submit_{str(project)}_{str(self.mBackendName)}_{lFilename}.csv.gz"
         output_df = pd.DataFrame(outputs , columns = ["Id" , "Visits"]);
         logger.info("WRITING_OUTPUT " + lFilename)
         output_df.to_csv(lFilename, compression='gzip', index=False)
@@ -94,9 +92,7 @@ class cProjectForecaster:
     def check_submission(self , filename, project):
         logger.info("SUBMIT_CHECK_START " + project)
         lSubmitDF = pd.read_csv(filename)
-        visited_ids = {}
-        for row in lSubmitDF.itertuples():
-            visited_ids[row[1]] = True
+        visited_ids = {row[1]: True for row in lSubmitDF.itertuples()}
         # print(list(visited_ids.keys())[:10])
         # print(list(self.mShortednedIds.items())[:10])
         # check that all short ids are present in the submission
@@ -105,5 +101,5 @@ class cProjectForecaster:
                 logger.info("SUBMIT_CHECK_FAILED " + project)
                 logger.info("MISSING_PREDICTION_FOR " + short_id + " " + page)
                 # assert(0)
-    
+
         logger.info("SUBMIT_CHECK_OK " + project)

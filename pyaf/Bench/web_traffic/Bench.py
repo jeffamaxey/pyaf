@@ -38,15 +38,19 @@ class cProjectData:
         self.mVisitsDF[article_id] = article_series
 
     def dump(self):
-        logger.info("PROJECT_DUMP_START " + str(self.mName))
-        logger.info("PROJECT_DUMP_AGENTS " +str(self.mAgents))
-        logger.info("PROJECT_DUMP_ACCESS "  + str(self.mAccess))
-        logger.info("PROJECT_DUMP_NUMBER_OF_ARTICLES " + str(len(self.mArticleInfo)))
-        
+        logger.info(f"PROJECT_DUMP_START {str(self.mName)}")
+        logger.info(f"PROJECT_DUMP_AGENTS {str(self.mAgents)}")
+        logger.info(f"PROJECT_DUMP_ACCESS {str(self.mAccess)}")
+        logger.info(f"PROJECT_DUMP_NUMBER_OF_ARTICLES {len(self.mArticleInfo)}")
+
         lIds = list(self.mArticleInfo.keys())
-        lArticles = lIds[0:5] + lIds[-5:]
-        logger.info("PROJECT_DUMP_ARTICLE_NAMES " + str([( k , self.mArticleInfo[k][2]) for k in lArticles]))
-        logger.info("PROJECT_DUMP_ARTICLE_PROJECTS" + str([( k , self.mArticleInfo[k][3]) for k in lArticles]))
+        lArticles = lIds[:5] + lIds[-5:]
+        logger.info(
+            f"PROJECT_DUMP_ARTICLE_NAMES {[(k, self.mArticleInfo[k][2]) for k in lArticles]}"
+        )
+        logger.info(
+            f"PROJECT_DUMP_ARTICLE_PROJECTS{[(k, self.mArticleInfo[k][3]) for k in lArticles]}"
+        )
         df = self.mVisitsDF[['Date'] + lArticles]
         print(df.info())
         print(df.describe())
@@ -68,7 +72,6 @@ class cDataExtractor:
         self.parse_project_data()
         for (name, project) in self.mProjectDataByName.items():
             project.dump()
-        pass
     
     def parse_project_data(self):
         pages_dict = self.mOriginalData['Page'].to_dict()
@@ -88,7 +91,6 @@ class cDataExtractor:
     
     def save_project_data(self , dest_dir):
         for (k,v) in self.mProjectDataByName.items():
-            output = open(dest_dir + "/" + k + '.pkl', 'wb')
-            pickle.dump(v, output)
-            output.close()
+            with open(dest_dir + "/" + k + '.pkl', 'wb') as output:
+                pickle.dump(v, output)
         

@@ -123,5 +123,5 @@ file_new = sys.argv[2]
 try:
     compare_files(file_orig, file_new);
 except Exception as e:
-    lStr = str(type(e).__name__) + " " + str(e)
+    lStr = f"{str(type(e).__name__)} {str(e)}"
     print("FILE_COMPARISON_FAILED_WITH_ERROR" , lStr);

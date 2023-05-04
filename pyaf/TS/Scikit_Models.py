@@ -136,8 +136,8 @@ class cAutoRegressiveModel(cAbstract_Scikit_Model):
         lDict1 = dict(zip(self.mInputNamesAfterSelection , abs(self.mScikitModel.coef_)));
         i = 1;
         lOrderedVariables = sorted(lDict1.keys(), key=lDict1.get, reverse=True);
-        for k in lOrderedVariables[0:iMax]:
-            logger.info("AR_MODEL_COEFF " + str(i) + " " + str(k) + " " + str(lDict[k]));
+        for k in lOrderedVariables[:iMax]:
+            logger.info(f"AR_MODEL_COEFF {str(i)} {str(k)} {str(lDict[k])}");
             i = i + 1;
 
 
@@ -185,12 +185,13 @@ class cXGBoost_Model(cAbstract_Scikit_Model):
         pass
 
     def get_default_xgb_options(self):
-        lXGBOptions = dict(n_estimators=10,
-                           nthread=1,
-                           min_child_weight=10,
-                           max_depth=3,
-                           seed=self.mOptions.mSeed)
-        return lXGBOptions
+        return dict(
+            n_estimators=10,
+            nthread=1,
+            min_child_weight=10,
+            max_depth=3,
+            seed=self.mOptions.mSeed,
+        )
 
         
     def build_Scikit_Model(self):
@@ -220,10 +221,11 @@ class cLightGBM_Model(cAbstract_Scikit_Model):
         pass
 
     def get_default_lgbm_options(self):
-        lLGBMOptions = dict(objective='regression',
-                            n_estimators=32,
-                            random_state=self.mOptions.mSeed)
-        return lLGBMOptions
+        return dict(
+            objective='regression',
+            n_estimators=32,
+            random_state=self.mOptions.mSeed,
+        )
         
     def build_Scikit_Model(self):
         import lightgbm as lgb

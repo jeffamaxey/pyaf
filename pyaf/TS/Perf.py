@@ -29,19 +29,27 @@ class cPerf:
         self.mDebug = False;
 
     def to_dict(self):
-        lDict = {"Signal" : self.mName , "Length" : self.mCount, "MAPE" : self.mMAPE,
-                 "RMSE" : self.mL2,  "MAE" : self.mL1,  "SMAPE" : self.mSMAPE,
-                 "ErrorMean" : self.mErrorMean, "ErrorStdDev" : self.mErrorStdDev, 
-                 "R2" : self.mR2, "Pearson" : self.mPearsonR, "MedAE": self.mMedAE, "LnQ" : self.mLnQ}
-        return lDict
+        return {
+            "Signal": self.mName,
+            "Length": self.mCount,
+            "MAPE": self.mMAPE,
+            "RMSE": self.mL2,
+            "MAE": self.mL1,
+            "SMAPE": self.mSMAPE,
+            "ErrorMean": self.mErrorMean,
+            "ErrorStdDev": self.mErrorStdDev,
+            "R2": self.mR2,
+            "Pearson": self.mPearsonR,
+            "MedAE": self.mMedAE,
+            "LnQ": self.mLnQ,
+        }
     
     def check_not_nan(self, sig , name):
         #print("check_not_nan");
-        if(np.isnan(sig).any()):
+        if (np.isnan(sig).any()):
             logger = tsutil.get_pyaf_logger();
-            logger.error("PERF_WITH_NAN_IN_SIGNAL" + str(sig));
+            logger.error(f"PERF_WITH_NAN_IN_SIGNAL{str(sig)}");
             raise tsutil.Internal_PyAF_Error("INVALID_COLUMN _FOR_PERF ['" + self.mName + "'] '" + name + "'");
-        pass
 
     def compute_MAPE_SMAPE_MASE(self, signal , estimator):
         self.mMAPE = None;
@@ -65,8 +73,7 @@ class cPerf:
     def compute_R2(self, signal , estimator):
         SST = np.sum((signal.values - np.mean(signal.values))**2) + 1.0e-10;
         SSRes = np.sum((signal.values - estimator.values)**2)
-        R2 = 1 - SSRes/SST
-        return R2
+        return 1 - SSRes/SST
 
     def compute_LnQ(self, signal , estimator):
         min_signal , min_estimator = signal.min() , estimator.min()
@@ -94,7 +101,6 @@ class cPerf:
             logger = tsutil.get_pyaf_logger();
             logger.error("Failure when computing perf ['" + self.mName + "'] '" + name + "'");
             raise tsutil.Internal_PyAF_Error("Failure when computing perf ['" + self.mName + "'] '" + name + "'");
-        pass
 
     def compute_pearson_r(self, signal , estimator):
         from scipy.stats import pearsonr
@@ -166,17 +172,15 @@ class cPerf:
             lPinballLoss_a = (1.0 - a / 100) * np.maximum(lDiff_q, 0.0) +  a / 100 * np.maximum(-lDiff_q, 0)
             lLossValue_a = lPinballLoss_a.mean()
             lLossValues.append(lLossValue_a)
-        lCRPS = np.mean(lLossValues)
-        # print("CRPS" , (self.mName , lCRPS))
-        return lCRPS
+        return np.mean(lLossValues)
 
             
     def computeCriterion(self, signal , estimator, criterion, name):
         self.mName = name;
         assert(signal.shape[0] > 0)
-        
+
         self.mCount = signal.shape[0];
-        if(criterion == "L1" or criterion == "MAE"):
+        if criterion in ["L1", "MAE"]:
             myerror = (estimator.values - signal.values);
             abs_error = abs(myerror)
             self.mL1 = np.mean(abs_error)
@@ -186,7 +190,7 @@ class cPerf:
             abs_error = abs(myerror)
             self.mMedAE = np.median(abs_error)
             return self.mMedAE;
-        if(criterion == "L2" or criterion == "RMSE"):
+        if criterion in ["L2", "RMSE"]:
             myerror = (estimator.values - signal.values);
             self.mL2 = np.sqrt(np.mean(myerror ** 2))
             return self.mL2;
@@ -199,7 +203,7 @@ class cPerf:
         if(criterion == "PEARSONR"):
             self.mPearsonR = self.compute_pearson_r(signal , estimator)
             return self.mPearsonR;
-        
+
         if(criterion == "MAPE"):
             self.compute_MAPE_SMAPE_MASE(signal , estimator);
             return self.mMAPE;
@@ -211,23 +215,22 @@ class cPerf:
         if(criterion == "MASE"):
             self.compute_MAPE_SMAPE_MASE(signal , estimator);
             return self.mMASE;
-        
+
         if(criterion == "CRPS"):
             self.mSignalQuantiles = self.compute_signal_quantiles(signal , estimator);
             self.mCRPS = self.compute_CRPS(signal , estimator);
             return self.mCRPS;
-        
+
         raise tsutil.Internal_PyAF_Error("Unknown Performance Measure ['" + self.mName + "'] '" + criterion + "'");
-        return 0.0;
 
     def getCriterionValue(self, criterion):
-        if(criterion == "L1" or criterion == "MAE"):
+        if criterion in ["L1", "MAE"]:
             return self.mL1;
         if(criterion == "MedAE"):
             return self.mMedAE;
         if(criterion == "LnQ"):
             return self.mLnQ;
-        if(criterion == "L2" or criterion == "RMSE"):
+        if criterion in ["L2", "RMSE"]:
             return self.mL2;
         if(criterion == "R2"):
             return self.mR2;
@@ -242,14 +245,13 @@ class cPerf:
         if(criterion == "CRPS"):
             return self.mCRPS;
         raise tsutil.Internal_PyAF_Error("Unknown Performance Measure ['" + self.mName + "'] '" + criterion + "'");
-        return 0.0;
 
 
     def is_acceptable_criterion_value(self, criterion, iRefValue = None):
         # percentages are bad when the mean error is above 1.0
-        if(criterion in ['MAPE' , 'SMAPE' , 'MASE', 'CRPS']):
+        if (criterion in ['MAPE' , 'SMAPE' , 'MASE', 'CRPS']):
             lCritValue = iRefValue
-            if(iRefValue is None):
+            if lCritValue is None:
                 lCritValue = self.getCriterionValue(criterion)
             return (lCritValue <= 1.0)
         # otherwise, acceptable by default
@@ -259,7 +261,7 @@ class cPerf:
     def is_close_criterion_value(self, criterion, value, iTolerance = 0.05, iRefValue = None):
         # percentages are close in an additive way
         lCritValue = iRefValue
-        if(iRefValue is None):
+        if lCritValue is None:
             lCritValue = self.getCriterionValue(criterion)
         if(criterion in ['MAPE' , 'SMAPE' , 'MASE', 'CRPS']):
             return (value <= (lCritValue + iTolerance))

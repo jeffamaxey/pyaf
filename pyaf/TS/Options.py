@@ -49,10 +49,10 @@ class cModelControl:
         # AutoRegression => "irregular component"
         self.mKnownAutoRegressions = ['NoAR' , 'AR' , 'ARX' , 'SVR', 'SVRX', 'MLP' , 'LSTM' , 'XGB' , 'XGBX' , 'CROSTON', 'LGB', 'LGBX'];
         # now , set he default models
-        self.set_active_transformations(self.mKnownTransformations[0:4]);
-        self.set_active_trends(self.mKnownTrends[0:4]);
+        self.set_active_transformations(self.mKnownTransformations[:4]);
+        self.set_active_trends(self.mKnownTrends[:4]);
         self.set_active_periodics(self.mKnownPeriodics);
-        self.set_active_autoregressions(self.mKnownAutoRegressions[0:3]);
+        self.set_active_autoregressions(self.mKnownAutoRegressions[:3]);
         # Add Multiplicative Models/Seasonals #178.
         # Only additive models are activated by default        
         self.set_active_decomposition_types(['T+S+R']);
@@ -60,10 +60,7 @@ class cModelControl:
     def set_active_decomposition_types(self, iDecompTypes):
         self.mActiveDecompositionTypes = {};
         for decomp_type in self.mKnownDecompositionTypes:
-            if(decomp_type in iDecompTypes):
-                self.mActiveDecompositionTypes[decomp_type] = True;
-            else:
-                self.mActiveDecompositionTypes[decomp_type] = False;
+            self.mActiveDecompositionTypes[decomp_type] = decomp_type in iDecompTypes
         if(True not in self.mActiveDecompositionTypes.values()):
             # default
             self.mActiveTransformations['T+S+R'] = True;
@@ -71,10 +68,7 @@ class cModelControl:
     def set_active_transformations(self, transformations):
         self.mActiveTransformations = {};
         for transformation in self.mKnownTransformations:
-            if(transformation in transformations):
-                self.mActiveTransformations[transformation] = True;
-            else:
-                self.mActiveTransformations[transformation] = False;
+            self.mActiveTransformations[transformation] = transformation in transformations
         if(True not in self.mActiveTransformations.values()):
             # default
             self.mActiveTransformations['None'] = True;
@@ -82,10 +76,7 @@ class cModelControl:
     def set_active_trends(self, trends):
         self.mActiveTrends = {};
         for trend in self.mKnownTrends:
-            if(trend in trends):
-                self.mActiveTrends[trend] = True;
-            else:
-                self.mActiveTrends[trend] = False;
+            self.mActiveTrends[trend] = trend in trends
         if(True not in self.mActiveTrends.values()):
             # default
             self.mActiveTrends['ConstantTrend'] = True;                
@@ -93,10 +84,7 @@ class cModelControl:
     def set_active_periodics(self, periodics):
         self.mActivePeriodics = {};
         for period in self.mKnownPeriodics:
-            if(period in periodics):
-                self.mActivePeriodics[period] = True;
-            else:
-                self.mActivePeriodics[period] = False;
+            self.mActivePeriodics[period] = period in periodics
         if(True not in self.mActivePeriodics.values()):
             # default
             self.mActivePeriodics['NoCycle'] = True;
@@ -104,10 +92,7 @@ class cModelControl:
     def set_active_autoregressions(self, autoregs):
         self.mActiveAutoRegressions = {};
         for autoreg in self.mKnownAutoRegressions:
-            if(autoreg in autoregs):
-                self.mActiveAutoRegressions[autoreg] = True;
-            else:
-                self.mActiveAutoRegressions[autoreg] = False;                
+            self.mActiveAutoRegressions[autoreg] = autoreg in autoregs
         if(True not in self.mActiveAutoRegressions.values()):
             # default
             self.mActiveAutoRegressions['NoAR'] = True;
@@ -231,7 +216,7 @@ class cSignalDecomposition_Options(cModelControl):
     (tensorflow backend). theano seems OK.
     Possible solution : increase developer knowledge of keras !!
     '''
-    def  canBuildKerasModel(self, iModel):
+    def canBuildKerasModel(self, iModel):
         try:
             import keras
             import keras
@@ -240,10 +225,7 @@ class cSignalDecomposition_Options(cModelControl):
             from keras.layers import Dense, Dropout
             from keras.layers import LSTM
             lBackEnd = keras.backend.backend()
-            if((lBackEnd == "tensorflow") and (self.mParallelMode)):
-                return False;
-            else:
-                return True;
+            return lBackEnd != "tensorflow" or not self.mParallelMode
         except:
             return False;
 

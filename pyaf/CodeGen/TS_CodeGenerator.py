@@ -13,9 +13,7 @@ class cTimeSeriesCodeGenerator:
         self.mInternalCodeGen = None;
 
     def generateCode(self, iAutoForecast, iDSN = None, iDialect = None):
-        # self.mInternalCodeGen = tscodegen.cDecompositionCodeGenObject();
-        lSQL = ""; # self.mInternalCodeGen.generateCode(iAutoForecast , iDSN, iDialect);
-        return lSQL;
+        return ""
 
 
     def testGeneration(self, iAutoForecast, iDSN = None, iDialect = None):

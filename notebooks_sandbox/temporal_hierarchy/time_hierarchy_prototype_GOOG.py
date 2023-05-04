@@ -3,23 +3,20 @@ import pyaf
 import datetime
 
 goog_link = 'https://raw.githubusercontent.com/antoinecarme/TimeSeriesData/master/YahooFinance/nasdaq/yahoo_GOOG.csv'
-    
+
 import pandas as pd
 goog_dataframe = pd.read_csv(goog_link);
 goog_dataframe['Date'] = goog_dataframe['Date'].apply(lambda x : datetime.datetime.strptime(x, "%Y-%m-%d"))
 goog_dataframe.sort_values(by = 'Date' , ascending=True, inplace=True)
 goog_dataframe.tail()
 
-lHierarchy = {};
-lHierarchy['Levels'] = None;
-lHierarchy['Data'] = None;
-lHierarchy['Groups']= {};
-
-lHierarchy['Periods']= ["D" , "W" , "Q"]
-
-lHierarchy['Type'] = "Temporal";
-
-
+lHierarchy = {
+    'Levels': None,
+    'Data': None,
+    'Groups': {},
+    'Periods': ["D", "W", "Q"],
+    'Type': "Temporal",
+};
 # create a model to plot the hierarchy.
 import pyaf.HierarchicalForecastEngine as hautof
 lEngine = hautof.cHierarchicalForecastEngine()

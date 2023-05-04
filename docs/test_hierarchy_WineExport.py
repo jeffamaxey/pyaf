@@ -18,14 +18,14 @@ French_Wine_Export_in_Euros_DF.head(5)
 
 
 Wines = u"ALSACE BEAUJOLAIS BORDEAUX BOURGOGNE CHAMPAGNE EUROPE FRANCE LANGUEDOC LOIRE OTHER RHONE".split();
-Wines = Wines[0:2];
+Wines = Wines[:2];
 Variants = ['BLANC' , 'MOUSSEUX' , 'ROUGE'];
 Variants = ['BLANC' , 'ROUGE'];
 Countries = ['GB', 'US', 'DE', 'BE', 'CN', 'JP', 'CH', 'HK', 'NL', 'CA' , 'OTHER']
 Regions = ['EUROPE', 'AMERICA', 'EUROPE' , 'EUROPE' , 'ASIA' , 'ASIA' , 'EUROPE',  'ASIA', 'EUROPE' , 'AMERICA' , 'OTHER_REGION']
 lDict = dict(zip(Countries , Regions));
 
-Countries = Countries[0:6]
+Countries = Countries[:6]
 
 rows_list = [];
 for v in Variants:
@@ -35,13 +35,13 @@ for v in Variants:
             region = lDict[c]
             if(col in French_Wine_Export_in_Euros_DF.columns):
                 rows_list.append([col , c , region , 'WORLD']);
-            
+
 lLevels = ['Wine' , 'Country' , 'Region' , 'WORLD'];
-lHierarchy = {};
-lHierarchy['Levels'] = lLevels;
-lHierarchy['Data'] = pd.DataFrame(rows_list, columns =  lLevels);
-lHierarchy['Type'] = "Hierarchical";
-    
+lHierarchy = {
+    'Levels': lLevels,
+    'Data': pd.DataFrame(rows_list, columns=lLevels),
+    'Type': "Hierarchical",
+};
 print(lHierarchy['Data'].head(lHierarchy['Data'].shape[0]));
 
 lEngine = hautof.cHierarchicalForecastEngine()

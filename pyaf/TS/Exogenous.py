@@ -25,23 +25,23 @@ class cExogenousInfo:
         self.mExcluded = [];
         
     def info(self):
-        lStr2 = "ExogenousVariables = '" + self.mExogD +"'";
-        return lStr2;
+        return "ExogenousVariables = '" + self.mExogD +"'"
 
 
     def to_dict(self):
-        dict1 = {};
-        return dict1;
+        return {}
 
     def check(self):
-        if(self.mExogenousData is not None):
+        if (self.mExogenousData is not None):
             lExogenousDataFrame = self.mExogenousData[0];
             lExogenousVariables = self.mExogenousData[1];
-            if(self.mDateVariable not in lExogenousDataFrame.columns):
-                raise tsutil.PyAF_Error("PYAF_ERROR_TIME_COLUMN_NOT_FOUND_IN_EXOGENOUS " + str(self.mDateVariable));
+            if (self.mDateVariable not in lExogenousDataFrame.columns):
+                raise tsutil.PyAF_Error(
+                    f"PYAF_ERROR_TIME_COLUMN_NOT_FOUND_IN_EXOGENOUS {str(self.mDateVariable)}"
+                );
             for exog in lExogenousVariables:
-                if(exog not in lExogenousDataFrame.columns):
-                    raise tsutil.PyAF_Error("PYAF_ERROR_EXOGENOUS_VARIABLE_NOT_FOUND " + str(exog));
+                if (exog not in lExogenousDataFrame.columns):
+                    raise tsutil.PyAF_Error(f"PYAF_ERROR_EXOGENOUS_VARIABLE_NOT_FOUND {str(exog)}");
                     
     def fit(self):
         self.mExogenousDataFrame = self.mExogenousData[0];
@@ -85,10 +85,7 @@ class cExogenousInfo:
         return df2;
 
     def transformDataset(self, df):
-        # print("BEFORE_EXOG_TRANSFORM_DATASET" , df.shape, df.columns);
-        df1 = self.addVars(df);
-        # print("AFTER_EXOG_TRANSFORM_DATASET" , df.shape, df.columns);
-        return df1;
+        return self.addVars(df)
         
     def createEncodedExogenous(self):
         self.mExogDummiesDataFrame = pd.DataFrame(index = self.mExogenousDataFrame.index);
@@ -96,7 +93,7 @@ class cExogenousInfo:
         self.mEncodedExogenousDataFrame = pd.DataFrame(index = self.mExogenousDataFrame.index);
         self.mEncodedExogenousDataFrame[self.mDateVariable] = self.mExogenousDataFrame[self.mDateVariable];
         for exog in self.mExogenousVariables:
-            if(exog not in self.mExcluded):
+            if (exog not in self.mExcluded):
                 lList = self.mExogenousVariableCategories[exog];
                 if(lList is not None):
                     for lCat in lList:
@@ -111,9 +108,6 @@ class cExogenousInfo:
                     self.mEncodedExogenousDataFrame[exog].fillna(np.float32(0.0), inplace=True);
                     # self.mEncodedExogenousDataFrame[exog] = self.mEncodedExogenousDataFrame[exog].astype(np.float32);
                     self.mEncodedExogenous = self.mEncodedExogenous + [exog];
-            else:
-                # print("EXCLUDED" , exog);
-                pass
 
 
     def updateExogenousVariableInfo(self):

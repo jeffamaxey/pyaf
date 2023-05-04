@@ -16,7 +16,6 @@ class cForecastEngine:
     def __init__(self):
         self.mSignalDecomposition = tsdec.cSignalDecomposition();
         self.mOptions = tsopts.cSignalDecomposition_Options();
-        pass
 
     
     def train(self , iInputDS, iTime, iSignal, iHorizon, iExogenousData = None):
@@ -28,12 +27,10 @@ class cForecastEngine:
         except Exception as error:
             # print('caught this training error: ' + repr(error))            
             raise tsutil.PyAF_Error("TRAIN_FAILED");
-        pass
 
     def forecast(self , iInputDS, iHorizon):
         try:
-            lForecastFrame = self.mSignalDecomposition.forecast(iInputDS, iHorizon);
-            return lForecastFrame;
+            return self.mSignalDecomposition.forecast(iInputDS, iHorizon)
         except tsutil.PyAF_Error as error:
             raise error
         except Exception as error:
@@ -66,6 +63,4 @@ class cForecastEngine:
     def generateCode(self, iDSN = None, iDialect = None):
         from CodeGen import TS_CodeGen_Objects as tscodegen
         lCodeGenerator = tscodegen.cDecompositionCodeGenObject(iDSN, iDialect);
-        lSQL = lCodeGenerator.generateCode(self);
-        # print("GENERATED_SQL_CODE" , lSQL);
-        return lSQL;
+        return lCodeGenerator.generateCode(self)

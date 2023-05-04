@@ -27,11 +27,10 @@ class cAbstractTrend:
 
     def check_not_nan(self, sig , name):
         #print("check_not_nan");
-        if(np.isnan(sig[:-1]).any() or np.isinf(sig[:-1]).any() ):
+        if (np.isnan(sig[:-1]).any() or np.isinf(sig[:-1]).any() ):
             logger = tsutil.get_pyaf_logger();
-            logger.error("TREND_RESIDUE_WITH_NAN_IN_SIGNAL" + str(sig));
+            logger.error(f"TREND_RESIDUE_WITH_NAN_IN_SIGNAL{str(sig)}");
             raise tsutil.Internal_PyAF_Error("INVALID_COLUMN _FOR_TREND_RESIDUE ['"  + name + "'");
-        pass
 
 
     def computePerf(self):
@@ -91,8 +90,7 @@ class cConstantTrend(cAbstractTrend):
         self.compute_trend_residue(self.mTrendFrame)
 
     def compute(self):
-        Y_pred = self.mMean
-        return Y_pred
+        return self.mMean
 
     def dump_values(self):
         logger = tsutil.get_pyaf_logger();
@@ -139,8 +137,7 @@ class cLag1Trend(cAbstractTrend):
         return df;
 
     def compute(self):
-        Y_pred = self.mTrendFrame[self.mSignal].shift(1)
-        return Y_pred
+        return self.mTrendFrame[self.mSignal].shift(1)
 
     def dump_values(self):
         logger = tsutil.get_pyaf_logger();
@@ -178,8 +175,7 @@ class cMovingAverageTrend(cAbstractTrend):
         return df;
 
     def compute(self):
-        Y_pred = self.mTrendFrame[self.mSignal].shift(1)
-        return Y_pred
+        return self.mTrendFrame[self.mSignal].shift(1)
 
     def dump_values(self):
         logger = tsutil.get_pyaf_logger();
@@ -217,8 +213,7 @@ class cMovingMedianTrend(cAbstractTrend):
         return df;
 
     def compute(self):
-        Y_pred = self.mTrendFrame[self.mSignal].shift(1)
-        return Y_pred
+        return self.mTrendFrame[self.mSignal].shift(1)
 
     def dump_values(self):
         logger = tsutil.get_pyaf_logger();
@@ -262,8 +257,7 @@ class cLinearTrend(cAbstractTrend):
         lTimeAfterSomeSteps = self.mTimeInfo.nextTime(iSteps)
         lTimeAfterSomeStepsNormalized = self.mTimeInfo.normalizeTime(lTimeAfterSomeSteps)
         df = pd.DataFrame([lTimeAfterSomeStepsNormalized , lTimeAfterSomeStepsNormalized ** 2])
-        Y_pred = self.mTrendRidge.predict(df.values)
-        return Y_pred
+        return self.mTrendRidge.predict(df.values)
 
     def dump_values(self):
         logger = tsutil.get_pyaf_logger();
@@ -323,8 +317,7 @@ class cPolyTrend(cAbstractTrend):
         lTimeAfterSomeSteps = self.mTimeInfo.nextTime(iSteps)
         lTimeAfterSomeStepsNormalized = self.mTimeInfo.normalizeTime(lTimeAfterSomeSteps)
         df = pd.DataFrame([lTimeAfterSomeStepsNormalized , lTimeAfterSomeStepsNormalized ** 2])
-        Y_pred = self.mTrendRidge.predict(df.values)
-        return Y_pred
+        return self.mTrendRidge.predict(df.values)
 
     def dump_values(self):
         logger = tsutil.get_pyaf_logger();
@@ -340,28 +333,26 @@ class cTrendEstimator:
 
     def needMovingTrend(self, df, i):
         N = df.shape[0];
-        if(N < (12 * i)) :
-            return False;
-        return True;
+        return N >= 12 * i
         
     def defineTrends(self):
 
         self.mTrendList = [];
-        
+
         if(self.mOptions.mActiveTrends['ConstantTrend']):
             self.mTrendList = [cConstantTrend()];
-        
-        if(self.mOptions.mActiveTrends['Lag1Trend']):
-            self.mTrendList = self.mTrendList + [cLag1Trend()];
+
+        if self.mOptions.mActiveTrends['Lag1Trend']:
+            self.mTrendList += [cLag1Trend()];
 
         N = self.mSignalFrame.shape[0];
-        
-        if(N > 1 and self.mOptions.mActiveTrends['LinearTrend']):
-            self.mTrendList = self.mTrendList + [cLinearTrend()]
 
-        if(N > 2 and self.mOptions.mActiveTrends['PolyTrend']):
-            self.mTrendList = self.mTrendList + [cPolyTrend()]
-                
+        if (N > 1 and self.mOptions.mActiveTrends['LinearTrend']):
+            self.mTrendList += [cLinearTrend()]
+
+        if (N > 2 and self.mOptions.mActiveTrends['PolyTrend']):
+            self.mTrendList += [cPolyTrend()]
+
         if(N > 2 and self.mOptions.mActiveTrends['MovingAverage']):
             for i in self.mOptions.mMovingAverageLengths:
                 if(self.needMovingTrend(self.mSignalFrame , i)):
@@ -388,7 +379,6 @@ class cTrendEstimator:
     def addTrendInputVariables(self):
         for trend in self.mTrendList:
             trend.addTrendInputVariables()
-        pass
 
     def check_residue(self , trend, sig, name):
         # print("check_trend_residue ", (name, trend.mDecompositionType, sig.min(), sig.max(), sig.mean(), sig .std()))
@@ -398,7 +388,6 @@ class cTrendEstimator:
         if(sig.max() > 1.e5):
             raise tsutil.Internal_PyAF_Error("Invalid residue_too_large '" +
                                              str((name, trend.mDecompositionType, sig.min(), sig.max(), sig.mean(), sig .std())) + "'");
-        pass
 
     def estimateTrends(self):
         lTimer = None
@@ -419,7 +408,6 @@ class cTrendEstimator:
             if(self.mOptions.mDebug):
                 self.check_residue(trend, self.mTrendFrame[trend.mOutName + "_residue"].values[:-1],
                                    trend.mOutName + "_residue");
-        pass
 
     def estimateTrend(self):
         self.defineTrends();

@@ -54,8 +54,7 @@ def returnAllModels():
 @app.route('/model/<string:name>', methods=['GET'])
 def returnOneModel(name):
     backend = get_backend();
-    model = backend.get_model(name);
-    if(model):
+    if model := backend.get_model(name):
         return jsonify({'model' : model.as_dict()})
     return jsonify({})
 
@@ -81,10 +80,7 @@ def returnOneModelSQL(name, sql_dialect):
     backend = get_backend();
     model = backend.get_model(name);
     model.generateCode();
-    if(model):
-        lSQL = model.mSQL[sql_dialect];
-        return lSQL
-    return jsonify({})
+    return model.mSQL[sql_dialect] if model else jsonify({})
 
 # POST requests
 

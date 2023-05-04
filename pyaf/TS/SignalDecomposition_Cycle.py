@@ -39,16 +39,16 @@ class cAbstractCycle:
 
     def check_not_nan(self, sig , name):
         #print("check_not_nan");
-        if(np.isnan(sig[:-1]).any() or np.isinf(sig[:-1]).any() ):
+        if (np.isnan(sig[:-1]).any() or np.isinf(sig[:-1]).any() ):
             logger = tsutil.get_pyaf_logger();
-            logger.error("CYCLE_RESIDUE_WITH_NAN_IN_SIGNAL" + str(sig));
+            logger.error(f"CYCLE_RESIDUE_WITH_NAN_IN_SIGNAL{str(sig)}");
             raise tsutil.Internal_PyAF_Error("CYCLE_COLUMN _FOR_TREND_RESIDUE ['"  + name + "'");
         # print("check_cycle_residue ", (name, self.mDecompositionType, sig[:-1].min(), sig[:-1].max(), sig[:-1].mean(), sig[:-1].std()))
-        if(sig[:-1].max() > 1e5):
+        if (sig[:-1].max() > 1e5):
             self.dump_values()
-            raise tsutil.Internal_PyAF_Error("Invalid cycle_residue_too_large '" + str(name) + "'");
-        pass
-        pass
+            raise tsutil.Internal_PyAF_Error(
+                f"Invalid cycle_residue_too_large '{str(name)}'"
+            );
 
     def compute_cycle_residue(self, df):
         target = df[self.mTrend_residue_name]
@@ -266,7 +266,7 @@ class cBestCycleForTrend(cAbstractCycle):
         lData = self.mCyclePerfByLength.items()
         if(len(lData) == 0):
             return
-        
+
         lPerf = tsperf.cPerf();
         # less MAPE is better, less categories is better, the last is the length to have a total order.
         lSortingMethod_By_MAPE = lambda x : (x[1][0], x[0])
@@ -282,7 +282,6 @@ class cBestCycleForTrend(cAbstractCycle):
         self.mBestCycleLength = lData_smallest[0][0]
 
         self.transformDataset(self.mCycleFrame);
-        pass
 
 
     def generate_cycles(self):
@@ -305,7 +304,7 @@ class cBestCycleForTrend(cAbstractCycle):
                     lambda x : lEncodedValueDict.get(x , self.mDefaultValue))
 
                 self.mBestCycleValueDict[lLength] = lEncodedValueDict;
-                
+
                 lPerf = tsperf.cPerf();
                 # validate the cycles on the validation part
                 lValidFrame = self.mSplit.getValidPart(lCycleFrame);
@@ -318,8 +317,7 @@ class cBestCycleForTrend(cAbstractCycle):
                     if(self.mOptions.mDebugCycles):
                         logger = tsutil.get_pyaf_logger();
                         logger.debug("CYCLE_INTERNAL_CRITERION " + name_length + " " + str(lLength) + \
-                                     " " + self.mCriterion +" " + str(lCritValue))
-        pass
+                                         " " + self.mCriterion +" " + str(lCritValue))
 
     def fit(self):
         # print("cycle_fit" , self.mTrend_residue_name);
@@ -329,8 +327,8 @@ class cBestCycleForTrend(cAbstractCycle):
         self.computeBestCycle();
         self.mOutName = self.getCycleName()
         self.mFormula = "Cycle_None"
-        if(self.mBestCycleLength is not None):
-            self.mFormula = "Cycle_" + str(self.mBestCycleLength);
+        if (self.mBestCycleLength is not None):
+            self.mFormula = f"Cycle_{str(self.mBestCycleLength)}";
         self.transformDataset(self.mCycleFrame);
         self.mComplexity = 0
         if(self.mBestCycleLength is not None):
@@ -364,19 +362,19 @@ class cCycleEstimator:
         self.mCycleList = {}
         
     def addSeasonal(self, trend, seas_type, resolution):
-        if(resolution >= self.mTimeInfo.mResolution):
-            lSeasonal = cSeasonalPeriodic(trend, seas_type);
-            if(self.mOptions.mActivePeriodics[lSeasonal.mFormula]):
-                if(lSeasonal.hasEnoughData(self.mTimeInfo.mTimeMin, self.mTimeInfo.mTimeMax)):
-                    self.mCycleList[trend] = self.mCycleList[trend] + [lSeasonal];
-                else:
-                    if(self.mOptions.mDebugCycles):
-                        lTimeDelta = self.mTimeInfo.mTimeMax - self.mTimeInfo.mTimeMin
-                        lDays = lTimeDelta / np.timedelta64(1,'D');
-                        logger = tsutil.get_pyaf_logger();
-                        logger.debug("NOT_ENOUGH_DATA_TO_ANAYLSE_SEASONAL_PATTERN " + str((trend.__class__.__name__, seas_type, resolution, lDays)))
-
-        pass
+        if resolution < self.mTimeInfo.mResolution:
+            return
+        lSeasonal = cSeasonalPeriodic(trend, seas_type);
+        if self.mOptions.mActivePeriodics[lSeasonal.mFormula]:
+            if (lSeasonal.hasEnoughData(self.mTimeInfo.mTimeMin, self.mTimeInfo.mTimeMax)):
+                self.mCycleList[trend] = self.mCycleList[trend] + [lSeasonal];
+            elif self.mOptions.mDebugCycles:
+                lTimeDelta = self.mTimeInfo.mTimeMax - self.mTimeInfo.mTimeMin
+                lDays = lTimeDelta / np.timedelta64(1,'D');
+                logger = tsutil.get_pyaf_logger();
+                logger.debug(
+                    f"NOT_ENOUGH_DATA_TO_ANAYLSE_SEASONAL_PATTERN {(trend.__class__.__name__, seas_type, resolution, lDays)}"
+                )
     
     def defineCycles(self):
         for trend in self.mTrendList:
@@ -384,9 +382,10 @@ class cCycleEstimator:
 
             if(self.mOptions.mActivePeriodics['NoCycle']):
                 self.mCycleList[trend] = [cZeroCycle(trend)];
-            if(self.mOptions.mActivePeriodics['BestCycle']):
-                self.mCycleList[trend] = self.mCycleList[trend] + [
-                    cBestCycleForTrend(trend, self.mOptions.mCycle_Criterion)];
+            if self.mOptions.mActivePeriodics['BestCycle']:
+                self.mCycleList[trend] += [
+                    cBestCycleForTrend(trend, self.mOptions.mCycle_Criterion)
+                ];
             if(self.mTimeInfo.isPhysicalTime()):
                 # The order used here is mandatory. see filterSeasonals before changing this order.
                 self.addSeasonal(trend, dtfunc.eDatePart.MonthOfYear, dtfunc.eTimeResolution.MONTH);
@@ -406,9 +405,9 @@ class cCycleEstimator:
                 self.addSeasonal(trend, dtfunc.eDatePart.TwelveHourOfWeek, dtfunc.eTimeResolution.HOUR);
                 self.addSeasonal(trend, dtfunc.eDatePart.WeekOfMonth, dtfunc.eTimeResolution.DAY);
                 self.addSeasonal(trend, dtfunc.eDatePart.DayOfNthWeekOfMonth, dtfunc.eTimeResolution.DAY);
-                
 
-                
+
+
         for trend in self.mTrendList:
             if(len(self.mCycleList[trend]) == 0):
                 self.mCycleList[trend] = [cZeroCycle(trend)];
@@ -462,7 +461,6 @@ class cCycleEstimator:
                                         cycle.getCycleResidueName())
             # Avoid dataframe fragmentation warnings.
             self.mCycleFrame = self.mCycleFrame.copy()
-        pass
 
 
     def filterSeasonals(self):
@@ -484,8 +482,8 @@ class cCycleEstimator:
                         lSeasonals[cycle.mOutName] = cycle
                 else:
                     lCycleList = lCycleList + [cycle]
-            
-            if(len(lSeasonals) == 0):
+
+            if not lSeasonals:
                 return
             lData = lPerfs.items()
             # less MAPE is better, less categories is better, the last is the name of the seasonal to have a total order.
@@ -508,7 +506,6 @@ class cCycleEstimator:
                 logger.info("CYCLE_TRAINING_FILTER_SEASONALS_DATA " + trend.mOutName + " " + str(lData_smallest))
                 logger.info("CYCLE_TRAINING_FILTER_SEASONALS_BEST " + trend.mOutName + " " + lBestSeasonal.mOutName + " " + str(lBestCriterion))
             logger.debug("CYCLE_TRAINING_FILTER_SEASONALS_END")
-        pass
 
     def estimateAllCycles(self):
         lTimer = None

@@ -17,33 +17,32 @@ for N in [32, 128, 1024]:
                     ar_label = "";
                     if(ar > 0):
                         ar_label = ar;
-                    lPath = "tests/artificial/transf_" + str(transf);
+                    lPath = f"tests/artificial/transf_{str(transf)}";
                     createDirIfNeeded(lPath);
-                    lPath = lPath + "/trend_" + str(trend);
+                    lPath = f"{lPath}/trend_{str(trend)}";
                     createDirIfNeeded(lPath);
-                    lPath = lPath + "/cycle_" + str(cycle_length);
+                    lPath = f"{lPath}/cycle_{str(cycle_length)}";
                     createDirIfNeeded(lPath);
-                    lPath = lPath + "/ar_" + str(ar_label);
+                    lPath = f"{lPath}/ar_{str(ar_label)}";
                     createDirIfNeeded(lPath);
                     for exogc in [0, 20, 100]:
-                        name = "test_artificial_" + str(N) + "_" + str(transf) + "_" + str(trend);
-                        name = name + "_" + str(cycle_length);
-                        name = name + "_" + str(ar_label) + "_" + str(exogc);
-                        
-                        filename = lPath + "/" + name + ".py";
-                        
-                        lVariable = "dataset = tsds.generate_random_TS(N = " + str(N);
+                        name = f"test_artificial_{str(N)}_{str(transf)}_{str(trend)}";
+                        name = f"{name}_{str(cycle_length)}";
+                        name = f"{name}_{str(ar_label)}_{str(exogc)}";
+
+                        filename = f"{lPath}/{name}.py";
+
+                        lVariable = f"dataset = tsds.generate_random_TS(N = {str(N)}";
                         lVariable = lVariable + " , FREQ = 'D', seed = 0, trendtype = \"" ;
                         lVariable = lVariable + str(trend) + "\", cycle_length = " + str(cycle_length);
                         lVariable = lVariable + ", transform = \"" + str(transf);
                         lVariable = lVariable + "\", sigma = 0.0, exog_count = " + str(exogc);
-                        lVariable = lVariable + ", ar_order = " + str(ar);
-                        lVariable = lVariable + ");";
-                        
-                        file = open(filename, "w");
-                        print("WRTITING_FILE" , filename);
-                        file.write("import pyaf.Bench.TS_datasets as tsds\n");
-                        file.write("import tests.artificial.process_artificial_dataset as art\n\n");
-                        file.write("\n\n\n" + lVariable);
-                        file.write("\n\nart.process_dataset(dataset);");
-                        file.close();
+                        lVariable = f"{lVariable}, ar_order = {str(ar)}";
+                        lVariable = f"{lVariable});";
+
+                        with open(filename, "w") as file:
+                            print("WRTITING_FILE" , filename);
+                            file.write("import pyaf.Bench.TS_datasets as tsds\n");
+                            file.write("import tests.artificial.process_artificial_dataset as art\n\n");
+                            file.write("\n\n\n" + lVariable);
+                            file.write("\n\nart.process_dataset(dataset);");
